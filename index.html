@@ -4,11 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Finance-Game do JOBE</title>
+<meta name="description" content="Finance-Game do JOBE - Gerenciador financeiro pessoal gamificado">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.10.3/Recharts.min.js"></script>
+<script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+<script>if(!window.Recharts){document.write('<scr'+'ipt src="https://cdn.jsdelivr.net/npm/recharts@2.10.3/umd/Recharts.js"><\/scr'+'ipt>')}</script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 <style>
 :root {
@@ -63,10 +68,13 @@ h1,h2,h3,.brand-text { font-family:'Orbitron','Rajdhani',sans-serif; }
 .btn-cyber:hover::before { left:100%; }
 .btn-cyber:hover { box-shadow:var(--shadow-cyan); transform:translateY(-2px); }
 .btn-cyber:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+.btn-cyber:disabled::before { display:none; }
 
 .game-input { background:var(--bg-darker); border:1px solid rgba(0,245,255,0.3); color:var(--text-primary); padding:12px 16px; border-radius:var(--border-radius-sm); font-family:inherit; transition:all .3s; width:100%; font-size:15px; }
 .game-input:focus { outline:none; border-color:var(--neon-cyan); box-shadow:var(--shadow-cyan); }
 .game-input option { background:var(--bg-darker); color:var(--text-primary); }
+input[type="date"].game-input::-webkit-calendar-picker-indicator { filter:invert(1); cursor:pointer; }
+select.game-input { cursor:pointer; }
 
 .hp-bar { height:20px; background:var(--bg-darker); border-radius:10px; overflow:hidden; position:relative; border:2px solid var(--neon-cyan); }
 .hp-fill { height:100%; transition:width 1s ease; position:relative; }
@@ -76,14 +84,19 @@ h1,h2,h3,.brand-text { font-family:'Orbitron','Rajdhani',sans-serif; }
 
 .grid-bg { background-image:linear-gradient(rgba(0,245,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.03) 1px,transparent 1px); background-size:50px 50px; }
 
-.anim-fadeInUp { animation:fadeInUp .5s ease forwards; }
+.anim-fadeInUp { animation:fadeInUp .5s ease both; }
+.anim-fiu-d0 { animation:fadeInUp .5s ease both; }
+.anim-fiu-d1 { animation:fadeInUp .5s ease .1s both; }
+.anim-fiu-d2 { animation:fadeInUp .5s ease .2s both; }
+.anim-fiu-d3 { animation:fadeInUp .5s ease .3s both; }
+.anim-fiu-d4 { animation:fadeInUp .5s ease .4s both; }
 .anim-fadeIn { animation:fadeIn .3s ease forwards; }
 .anim-scaleIn { animation:scaleIn .3s ease forwards; }
 .anim-slideR { animation:slideRight .4s ease forwards; }
 
 /* Modal overlay */
 .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.8); backdrop-filter:blur(4px); z-index:50; display:flex; align-items:center; justify-content:center; padding:16px; animation:fadeIn .2s ease; }
-.modal-content { width:100%; max-width:420px; animation:scaleIn .3s ease; }
+.modal-content { width:100%; max-width:420px; animation:scaleIn .3s ease; max-height:90vh; overflow-y:auto; }
 
 /* Toast */
 .toast { position:fixed; top:80px; right:16px; z-index:60; padding:16px; border-radius:var(--border-radius); backdrop-filter:blur(10px); animation:slideLeft .3s ease; max-width:350px; }
@@ -92,6 +105,8 @@ h1,h2,h3,.brand-text { font-family:'Orbitron','Rajdhani',sans-serif; }
 .sidebar { position:fixed; top:0; left:0; bottom:0; width:280px; background:var(--bg-card); border-right:1px solid rgba(255,255,255,.1); z-index:40; transition:transform .3s; display:flex; flex-direction:column; }
 .sidebar.closed { transform:translateX(-100%); }
 .sidebar-btn { width:100%; display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:8px; transition:all .2s; border:none; background:none; cursor:pointer; font-family:inherit; font-size:15px; color:#9ca3af; text-align:left; }
+.sidebar-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:39; display:none; }
+@media(max-width:768px) { .sidebar-backdrop.show { display:block; } }
 .sidebar-btn:hover { background:rgba(255,255,255,.05); color:white; }
 .sidebar-btn.active { background:linear-gradient(90deg,rgba(0,245,255,.15),rgba(157,0,255,.15)); color:white; border:1px solid rgba(0,245,255,.5); }
 
@@ -108,15 +123,58 @@ h1,h2,h3,.brand-text { font-family:'Orbitron','Rajdhani',sans-serif; }
   .grid-4 { grid-template-columns:1fr 1fr !important; }
   .grid-3 { grid-template-columns:1fr !important; }
   .hide-mobile { display:none !important; }
-  .flex-col-mobile { flex-direction:column !important; }
+  .flex-col-mobile { flex-direction:column !important; text-align:center; }
+}
+@media(max-width:480px) {
+  .grid-4 { grid-template-columns:1fr !important; }
 }
 </style>
 </head>
 <body>
-<div id="root"></div>
+<div id="root"><div style="min-height:100vh;background:#0a0a0f;display:flex;align-items:center;justify-content:center"><div style="text-align:center"><div style="width:48px;height:48px;border:4px solid #00f5ff;border-top-color:transparent;border-radius:50%;margin:0 auto 16px;animation:spin .8s linear infinite"></div><p style="color:#00f5ff;font-family:monospace">Carregando...</p></div></div></div>
+<script>
+// Global error handler - catches CDN load failures and Babel errors
+window.onerror = function(msg, src, line, col, err) {
+  var el = document.getElementById('root');
+  if (el && el.querySelector('.app-loaded') === null) {
+    el.innerHTML = '<div style="min-height:100vh;background:#0a0a0f;display:flex;align-items:center;justify-content:center;padding:20px">'
+      + '<div style="text-align:center;max-width:600px">'
+      + '<div style="font-size:48px;margin-bottom:16px">⚠️</div>'
+      + '<p style="color:#ff0040;font-family:monospace;font-size:16px;margin-bottom:12px">Erro ao carregar o app</p>'
+      + '<p style="color:#a0a0b0;font-size:13px;margin-bottom:8px;word-break:break-all">' + msg + '</p>'
+      + '<p style="color:#606070;font-size:11px;margin-bottom:20px">Verifique sua conexão com a internet e recarregue.</p>'
+      + '<button onclick="location.reload()" style="padding:12px 32px;background:linear-gradient(135deg,#00f5ff,#0080ff);border:none;color:#0a0a0f;font-weight:bold;border-radius:8px;cursor:pointer;font-size:14px;text-transform:uppercase;letter-spacing:2px">Recarregar</button>'
+      + '</div></div>';
+  }
+  console.error('Finance-Game Error:', msg, src, line);
+};
+</script>
 <script type="text/babel">
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
-const { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, AreaChart, Area, ComposedChart, Line, Legend } = Recharts;
+
+// FIX: Helper for local date string (avoids UTC timezone bugs)
+function getLocalDateStr(d) {
+  if (!d) d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// FIX: Resilient Recharts loading - app works even if CDN fails
+const _R = window.Recharts || {};
+const EmptyChart = ({children, ...p}) => React.createElement('div', {style:{height:p.height||200,display:'flex',alignItems:'center',justifyContent:'center',color:'#606070',fontSize:13}}, 'Gráfico indisponível');
+const PieChart = _R.PieChart || EmptyChart;
+const Pie = _R.Pie || 'div';
+const Cell = _R.Cell || 'div';
+const ResponsiveContainer = _R.ResponsiveContainer || (({children,...p}) => React.createElement('div', {style:{width:'100%',height:p.height||200}}, children));
+const BarChart = _R.BarChart || EmptyChart;
+const Bar = _R.Bar || 'div';
+const XAxis = _R.XAxis || 'div';
+const YAxis = _R.YAxis || 'div';
+const Tooltip = _R.Tooltip || 'div';
+const AreaChart = _R.AreaChart || EmptyChart;
+const Area = _R.Area || 'div';
+const ComposedChart = _R.ComposedChart || EmptyChart;
+const Line = _R.Line || 'div';
+const Legend = _R.Legend || 'div';
 
 // ==================== ICONS (SVG Components) ====================
 const Icons = {
@@ -318,7 +376,7 @@ function Dashboard({state, getTotalIncome, getTotalExpense, getBalance, getDaily
           {label:'Saldo',value:fmt(balance),color:balance>=0?'#4ade80':'#f87171',bg:balance>=0?'rgba(74,222,128,.15)':'rgba(248,113,113,.15)',icon:<Icons.Wallet/>,badge:balance>=0?'Positivo':'Negativo'},
           {label:'Gastos do Dia',value:fmt(dailyTotal),color:'#fb923c',bg:'rgba(251,146,60,.15)',icon:<Icons.Zap/>,badge:'HOJE'},
         ].map((c,i)=>(
-          <div key={i} className="stat-card" style={{animationDelay:`${i*.1}s`,animation:'fadeInUp .5s ease forwards',opacity:0}}>
+          <div key={i} className={`stat-card anim-fiu-d${i}`}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
               <div style={{padding:12,borderRadius:8,background:c.bg,color:c.color}}>{c.icon}</div>
               <span style={{fontSize:11,color:c.color,fontWeight:600}}>{c.badge}</span>
@@ -424,7 +482,7 @@ function Transactions({state, categories, onAdd, onDelete}) {
   const [show, setShow] = useState(false);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
-  const [form, setForm] = useState({type:'expense',amount:'',category:'',description:'',date:new Date().toISOString().split('T')[0]});
+  const [form, setForm] = useState({type:'expense',amount:'',category:'',description:'',date:getLocalDateStr()});
   
   const filtered = state.transactions.filter(t => {
     const ms = t.description.toLowerCase().includes(search.toLowerCase()) || t.category.toLowerCase().includes(search.toLowerCase());
@@ -435,7 +493,7 @@ function Transactions({state, categories, onAdd, onDelete}) {
     e.preventDefault();
     if (!form.amount||!form.category||!form.description) return;
     onAdd({type:form.type,amount:parseFloat(form.amount),category:form.category,description:form.description,date:form.date});
-    setForm({type:'expense',amount:'',category:'',description:'',date:new Date().toISOString().split('T')[0]});
+    setForm({type:'expense',amount:'',category:'',description:'',date:getLocalDateStr()});
     setShow(false);
   };
 
@@ -526,12 +584,12 @@ function Transactions({state, categories, onAdd, onDelete}) {
 
 // ==================== DAILY EXPENSES ====================
 function DailyExpenses({transactions}) {
-  const [sel, setSel] = useState(new Date().toISOString().split('T')[0]);
-  const nav = d => { const dt = new Date(sel+'T12:00:00'); dt.setDate(dt.getDate()+(d==='next'?1:-1)); setSel(dt.toISOString().split('T')[0]); };
+  const [sel, setSel] = useState(getLocalDateStr());
+  const nav = d => { const dt = new Date(sel+'T12:00:00'); dt.setDate(dt.getDate()+(d==='next'?1:-1)); setSel(getLocalDateStr(dt)); };
   const dayT = useMemo(()=>transactions.filter(t=>t.date===sel&&t.type==='expense'),[transactions,sel]);
   const dayTotal = useMemo(()=>dayT.reduce((s,t)=>s+t.amount,0),[dayT]);
   const avg = useMemo(()=>{const e=transactions.filter(t=>t.type==='expense');if(!e.length)return 0;const d=new Set(e.map(t=>t.date));return e.reduce((s,t)=>s+t.amount,0)/d.size;},[transactions]);
-  const last7 = useMemo(()=>{const d=[];for(let i=6;i>=0;i--){const dt=new Date();dt.setDate(dt.getDate()-i);const s=dt.toISOString().split('T')[0];const tot=transactions.filter(t=>t.date===s&&t.type==='expense').reduce((a,t)=>a+t.amount,0);d.push({date:s,dayName:dt.toLocaleDateString('pt-BR',{weekday:'short'}),total:tot,isSelected:s===sel});}return d;},[transactions,sel]);
+  const last7 = useMemo(()=>{const d=[];for(let i=6;i>=0;i--){const dt=new Date();dt.setDate(dt.getDate()-i);const s=getLocalDateStr(dt);const tot=transactions.filter(t=>t.date===s&&t.type==='expense').reduce((a,t)=>a+t.amount,0);d.push({date:s,dayName:dt.toLocaleDateString('pt-BR',{weekday:'short'}),total:tot,isSelected:s===sel});}return d;},[transactions,sel]);
   
   const status = dayTotal===0?{icon:'✨',text:'Sem gastos!',color:'#39ff14',msg:'Dia perfeito!'}:dayTotal<=avg*.5?{icon:'🌟',text:'Excelente!',color:'#00f5ff',msg:'Economizando muito!'}:dayTotal<=avg?{icon:'👍',text:'Bom',color:'#ffff00',msg:'Dentro da média'}:dayTotal<=avg*1.5?{icon:'⚠️',text:'Atenção',color:'#ff6600',msg:'Acima da média'}:{icon:'🚨',text:'Crítico',color:'#ff0040',msg:'Gastos muito altos!'};
 
@@ -542,7 +600,7 @@ function DailyExpenses({transactions}) {
         <div className="glass-card" style={{padding:8,display:'flex',alignItems:'center',gap:8}}>
           <button onClick={()=>nav('prev')} style={{padding:8,borderRadius:8,background:'none',border:'none',cursor:'pointer',color:'var(--neon-cyan)'}}><Icons.ChevronLeft/></button>
           <div style={{padding:'0 16px',textAlign:'center'}}><p style={{color:'white',fontWeight:500}}>{new Date(sel+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})}</p>
-          {sel===new Date().toISOString().split('T')[0]&&<span style={{fontSize:11,color:'var(--neon-cyan)'}}>HOJE</span>}</div>
+          {sel===getLocalDateStr()&&<span style={{fontSize:11,color:'var(--neon-cyan)'}}>HOJE</span>}</div>
           <button onClick={()=>nav('next')} style={{padding:8,borderRadius:8,background:'none',border:'none',cursor:'pointer',color:'var(--neon-cyan)'}}><Icons.ChevronRight/></button>
         </div>
       </div>
@@ -866,12 +924,19 @@ function StatsView({state, categories}) {
 
 // ==================== MAIN APP ====================
 function App() {
-  const [logged, setLogged] = useState(false);
-  const [userName, setUserName] = useState('');
+  const [logged, setLogged] = useState(()=>sessionStorage.getItem('fgj_session')==='true');
+  const [userName, setUserName] = useState(()=>sessionStorage.getItem('fgj_name')||'');
   const [view, setView] = useState('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  useEffect(() => {
+    const onResize = () => { const m = window.innerWidth <= 768; setIsMobile(m); if(m) setSidebarOpen(false); };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
   const [toast, setToast] = useState(null);
   const [showWelcome, setShowWelcome] = useState(false);
+  const toastTimerRef = useRef(null);
 
   // State
   const [state, setState] = useState({
@@ -895,8 +960,9 @@ function App() {
   },[state, logged]);
 
   const showToast = useCallback((title,msg,type='success')=>{
+    if(toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast({title,msg,type});
-    setTimeout(()=>setToast(null),4000);
+    toastTimerRef.current = setTimeout(()=>{setToast(null);toastTimerRef.current=null;},4000);
   },[]);
 
   // Login handler
@@ -904,10 +970,12 @@ function App() {
     setUserName(name);
     setState(prev=>({...prev,user:{...prev.user,name}}));
     setLogged(true);
+    sessionStorage.setItem('fgj_session','true');
+    sessionStorage.setItem('fgj_name',name);
     if(state.transactions.length === 0) setTimeout(()=>setShowWelcome(true),500);
   };
 
-  const handleLogout = () => { setLogged(false); setUserName(''); };
+  const handleLogout = () => { setLogged(false); setUserName(''); sessionStorage.removeItem('fgj_session'); sessionStorage.removeItem('fgj_name'); };
 
   // Actions
   const addTransaction = (tx) => {
@@ -917,7 +985,7 @@ function App() {
       const ntot = prev.gameStats.totalTransactions + 1;
       const xpG = tx.type==='income' ? Math.floor(tx.amount/10) : Math.floor(tx.amount/20);
       let nxp = prev.gameStats.xp + xpG, nlvl = prev.gameStats.level, nxpN = prev.gameStats.xpToNextLevel;
-      if(nxp >= nxpN) { nlvl++; nxpN = Math.floor(nxpN*1.5); confetti({particleCount:80,spread:60,origin:{y:.6},colors:['#ffd700','#ff00ff','#00f5ff']}); }
+      while(nxp >= nxpN) { nxp -= nxpN; nlvl++; nxpN = Math.floor(nxpN*1.5); try{confetti({particleCount:80,spread:60,origin:{y:.6},colors:['#ffd700','#ff00ff','#00f5ff']});}catch(e){} }
       const nachs = prev.gameStats.achievements.map(a=>{
         if(a.unlocked) return a;
         let u=false;
@@ -926,7 +994,7 @@ function App() {
         if(a.condition==='income_goal' && nts.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0)>=a.requirement) u=true;
         return u ? {...a,unlocked:true,unlockedAt:Date.now()} : a;
       });
-      return {...prev,transactions:nts,gameStats:{...prev.gameStats,xp:nxp%nxpN,level:nlvl,xpToNextLevel:nxpN,totalTransactions:ntot,achievements:nachs}};
+      return {...prev,transactions:nts,gameStats:{...prev.gameStats,xp:nxp,level:nlvl,xpToNextLevel:nxpN,totalTransactions:ntot,achievements:nachs}};
     });
     showToast(tx.type==='income'?'💰 Receita Adicionada!':'💸 Despesa Registrada!',`${tx.description}: ${fmt(tx.amount)}`,tx.type==='income'?'success':'warning');
   };
@@ -940,22 +1008,24 @@ function App() {
     setState(prev=>{
       const ng = prev.goals.map(g=>g.id===id?{...g,currentAmount:Math.min(g.currentAmount+amt,g.targetAmount)}:g);
       const g = ng.find(x=>x.id===id);
-      if(g && g.currentAmount>=g.targetAmount) confetti({particleCount:120,spread:90,origin:{y:.6},colors:['#39ff14','#00f5ff','#ffd700']});
+      const completed = g && g.currentAmount>=g.targetAmount;
+      if(completed) try{confetti({particleCount:120,spread:90,origin:{y:.6},colors:['#39ff14','#00f5ff','#ffd700']});}catch(e){}
+      setTimeout(()=>{
+        if(completed) showToast('🎉 Meta Atingida!',`Completou: ${g.name}`,'success');
+        else showToast('💎 Contribuição!',`+${fmt(amt)}`,'success');
+      },50);
       return {...prev,goals:ng};
     });
-    const g = state.goals.find(x=>x.id===id);
-    if(g && g.currentAmount+amt>=g.targetAmount) showToast('🎉 Meta Atingida!',`Completou: ${g.name}`,'success');
-    else showToast('💎 Contribuição!',`+${fmt(amt)}`,'success');
   };
 
   // Computed
   const getTotalIncome = useCallback(()=>state.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),[state.transactions]);
   const getTotalExpense = useCallback(()=>state.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),[state.transactions]);
   const getBalance = useCallback(()=>getTotalIncome()-getTotalExpense(),[getTotalIncome,getTotalExpense]);
-  const getDailyTotal = useCallback(()=>{const td=new Date().toISOString().split('T')[0];return state.transactions.filter(t=>t.type==='expense'&&t.date===td).reduce((s,t)=>s+t.amount,0);},[state.transactions]);
+  const getDailyTotal = useCallback(()=>{const td=getLocalDateStr();return state.transactions.filter(t=>t.type==='expense'&&t.date===td).reduce((s,t)=>s+t.amount,0);},[state.transactions]);
   const getTransactionsByCategory = useCallback((type)=>{return state.categories.filter(c=>c.type===type).map(c=>({name:c.name,value:state.transactions.filter(t=>t.type===type&&t.category===c.name).reduce((s,t)=>s+t.amount,0),color:c.color,icon:c.icon})).filter(c=>c.value>0);},[state.transactions,state.categories]);
   const getMonthlyData = useCallback(()=>{const m={};state.transactions.forEach(t=>{const k=t.date.substring(0,7);if(!m[k])m[k]={income:0,expense:0};m[k][t.type]+=t.amount;});return Object.entries(m).map(([k,v])=>({month:k,income:v.income,expense:v.expense,balance:v.income-v.expense})).sort((a,b)=>a.month.localeCompare(b.month)).slice(-6);},[state.transactions]);
-  const getExpensesByDay = useCallback(()=>{const d7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-i);return d.toISOString().split('T')[0];}).reverse();const days={};d7.forEach(d=>days[d]=0);state.transactions.filter(t=>t.type==='expense'&&days[t.date]!==undefined).forEach(t=>days[t.date]+=t.amount);return d7.map(d=>({date:d,dayName:new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'short'}),total:days[d]}));},[state.transactions]);
+  const getExpensesByDay = useCallback(()=>{const d7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-i);return getLocalDateStr(d);}).reverse();const days={};d7.forEach(d=>days[d]=0);state.transactions.filter(t=>t.type==='expense'&&days[t.date]!==undefined).forEach(t=>days[t.date]+=t.amount);return d7.map(d=>({date:d,dayName:new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'short'}),total:days[d]}));},[state.transactions]);
   const getRecentTransactions = useCallback(()=>state.transactions.slice(0,10),[state.transactions]);
   const getUnlockedAchievements = useCallback(()=>state.gameStats.achievements.filter(a=>a.unlocked),[state.gameStats.achievements]);
 
@@ -974,7 +1044,9 @@ function App() {
   const balance = getBalance();
 
   return (
-    <div className="grid-bg" style={{minHeight:'100vh'}}>
+    <div className="grid-bg app-loaded" style={{minHeight:'100vh'}}>
+      {/* Sidebar backdrop for mobile */}
+      {sidebarOpen && isMobile && <div className="sidebar-backdrop show" onClick={()=>setSidebarOpen(false)}/>}
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen?'':'closed'}`}>
         <div style={{padding:20,borderBottom:'1px solid rgba(255,255,255,.1)'}}>
@@ -995,7 +1067,7 @@ function App() {
           {menuItems.map(m=>{
             const Icon = m.icon;
             return (
-              <button key={m.id} className={`sidebar-btn ${view===m.id?'active':''}`} onClick={()=>{setView(m.id);if(window.innerWidth<=768)setSidebarOpen(false);}}>
+              <button key={m.id} className={`sidebar-btn ${view===m.id?'active':''}`} onClick={()=>{setView(m.id);if(isMobile)setSidebarOpen(false);}}>
                 <span style={{color:view===m.id?'var(--neon-cyan)':'inherit'}}><Icon/></span>
                 <span>{m.label}</span>
                 {view===m.id && <span style={{marginLeft:'auto',width:6,height:6,borderRadius:'50%',background:'var(--neon-cyan)'}}/>}
@@ -1011,14 +1083,14 @@ function App() {
       </aside>
 
       {/* Main */}
-      <main className="main-content" style={{marginLeft:sidebarOpen?280:0,transition:'margin-left .3s'}}>
+      <main className="main-content" style={{marginLeft:sidebarOpen&&!isMobile?280:0,transition:'margin-left .3s'}}>
         <header style={{position:'sticky',top:0,zIndex:30,background:'rgba(10,10,15,.85)',backdropFilter:'blur(16px)',borderBottom:'1px solid rgba(255,255,255,.08)'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:16}}>
             <div style={{display:'flex',alignItems:'center',gap:16}}>
               <button onClick={()=>setSidebarOpen(!sidebarOpen)} style={{padding:8,borderRadius:8,background:'none',border:'none',cursor:'pointer',color:'var(--text-muted)',transition:'background .2s'}}
                 onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.08)'}
                 onMouseLeave={e=>e.currentTarget.style.background='none'}>
-                {sidebarOpen ? <Icons.X/> : <Icons.Menu/>}
+                {sidebarOpen && !isMobile ? <Icons.X/> : <Icons.Menu/>}
               </button>
               <h2 style={{fontSize:18,fontWeight:700,color:'white'}}>{menuItems.find(m=>m.id===view)?.label}</h2>
             </div>
@@ -1066,8 +1138,8 @@ function App() {
             <h2 style={{fontSize:26,color:'white',marginBottom:12}}>Bem-vindo ao Finance-Game!</h2>
             <p style={{color:'var(--text-muted)',marginBottom:24,lineHeight:1.6}}>Transforme sua gestão financeira em uma experiência gamificada. Complete missões, desbloqueie conquistas e evolua seu nível!</p>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:24}}>
-              {[{e:'📊',t:'Controle Total',c:'var(--neon-cyan)'},{e:'🏆',t:'Conquistas',c:'#a855f7'},{e:'⭐',t:'Metas',c:'#4ade80'}].map((x,i)=>(
-                <div key={i} style={{padding:16,borderRadius:8,background:`${x.c}10`,border:`1px solid ${x.c}30`}}><div style={{fontSize:28,marginBottom:4}}>{x.e}</div><p style={{color:x.c,fontSize:12}}>{x.t}</p></div>
+              {[{e:'📊',t:'Controle Total',c:'#00f5ff',bg:'rgba(0,245,255,.08)',bd:'rgba(0,245,255,.25)'},{e:'🏆',t:'Conquistas',c:'#a855f7',bg:'rgba(168,85,247,.08)',bd:'rgba(168,85,247,.25)'},{e:'⭐',t:'Metas',c:'#4ade80',bg:'rgba(74,222,128,.08)',bd:'rgba(74,222,128,.25)'}].map((x,i)=>(
+                <div key={i} style={{padding:16,borderRadius:8,background:x.bg,border:`1px solid ${x.bd}`}}><div style={{fontSize:28,marginBottom:4}}>{x.e}</div><p style={{color:x.c,fontSize:12}}>{x.t}</p></div>
               ))}
             </div>
             <button className="btn-cyber" style={{width:'100%',fontSize:16}} onClick={()=>setShowWelcome(false)}>Começar a Jogar!</button>
@@ -1078,7 +1150,17 @@ function App() {
   );
 }
 
-ReactDOM.render(<App/>, document.getElementById('root'));
+// FIX: createRoot with fallback for compatibility
+try {
+  if (ReactDOM.createRoot) {
+    ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+  } else {
+    ReactDOM.render(React.createElement(App), document.getElementById('root'));
+  }
+} catch(err) {
+  document.getElementById('root').innerHTML = '<div style="min-height:100vh;background:#0a0a0f;display:flex;align-items:center;justify-content:center;padding:20px"><div style="text-align:center;max-width:500px"><p style="color:#ff0040;font-family:Orbitron,monospace;font-size:18px;margin-bottom:16px">Erro ao carregar</p><p style="color:#a0a0b0;font-size:14px">'+err.message+'</p><button onclick="location.reload()" style="margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,#00f5ff,#0080ff);border:none;color:#0a0a0f;font-weight:bold;border-radius:8px;cursor:pointer;font-size:14px">Recarregar</button></div></div>';
+  console.error('Finance-Game init error:', err);
+}
 </script>
 </body>
 </html>
