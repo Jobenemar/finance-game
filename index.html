@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance-Game do JOBE</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.10.3/Recharts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+<style>
+:root {
+  --neon-cyan: #00f5ff;
+  --neon-pink: #ff00ff;
+  --neon-green: #39ff14;
+  --neon-yellow: #ffff00;
+  --neon-orange: #ff6600;
+  --neon-red: #ff0040;
+  --neon-purple: #9d00ff;
+  --neon-blue: #0080ff;
+  --bg-dark: #0a0a0f;
+  --bg-darker: #050508;
+  --bg-card: #12121a;
+  --bg-card-hover: #1a1a25;
+  --bg-glass: rgba(18, 18, 26, 0.8);
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0b0;
+  --text-muted: #606070;
+  --gradient-cyber: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
+  --shadow-cyan: 0 0 10px rgba(0, 245, 255, 0.5), 0 0 20px rgba(0, 245, 255, 0.3);
+  --border-radius: 12px;
+  --border-radius-sm: 8px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body { font-family:'Rajdhani','Segoe UI',sans-serif; background:var(--bg-dark); color:var(--text-primary); min-height:100vh; overflow-x:hidden; }
+h1,h2,h3,.brand-text { font-family:'Orbitron','Rajdhani',sans-serif; }
+::-webkit-scrollbar { width:8px; }
+::-webkit-scrollbar-track { background:var(--bg-darker); }
+::-webkit-scrollbar-thumb { background:linear-gradient(180deg,var(--neon-cyan),var(--neon-pink)); border-radius:4px; }
+@keyframes pulse-glow { 0%,100%{box-shadow:0 0 5px var(--neon-cyan),0 0 10px var(--neon-cyan)} 50%{box-shadow:0 0 20px var(--neon-cyan),0 0 30px var(--neon-cyan)} }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+@keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes scaleIn { from{opacity:0;transform:scale(.9)} to{opacity:1;transform:scale(1)} }
+@keyframes slideRight { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
+@keyframes slideLeft { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes borderFlow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+@keyframes particleRise { 0%{transform:translateY(0) scale(1);opacity:1} 100%{transform:translateY(-80px) scale(0);opacity:0} }
+
+.glass-card { background:var(--bg-glass); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.1); border-radius:var(--border-radius); }
+.stat-card { background:var(--bg-card); border:1px solid rgba(0,245,255,0.2); border-radius:var(--border-radius); padding:20px; transition:all .3s; position:relative; overflow:hidden; }
+.stat-card::before { content:''; position:absolute; top:0; left:0; width:100%; height:2px; background:var(--gradient-cyber); transform:scaleX(0); transition:transform .3s; }
+.stat-card:hover::before { transform:scaleX(1); }
+.stat-card:hover { border-color:var(--neon-cyan); box-shadow:var(--shadow-cyan); transform:translateY(-5px); }
+
+.btn-cyber { background:linear-gradient(135deg,var(--neon-cyan),var(--neon-blue)); border:none; color:var(--bg-dark); font-weight:bold; text-transform:uppercase; letter-spacing:2px; padding:12px 24px; border-radius:var(--border-radius-sm); cursor:pointer; transition:all .3s; position:relative; overflow:hidden; font-family:inherit; font-size:14px; }
+.btn-cyber::before { content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent); transition:left .5s; }
+.btn-cyber:hover::before { left:100%; }
+.btn-cyber:hover { box-shadow:var(--shadow-cyan); transform:translateY(-2px); }
+.btn-cyber:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+.game-input { background:var(--bg-darker); border:1px solid rgba(0,245,255,0.3); color:var(--text-primary); padding:12px 16px; border-radius:var(--border-radius-sm); font-family:inherit; transition:all .3s; width:100%; font-size:15px; }
+.game-input:focus { outline:none; border-color:var(--neon-cyan); box-shadow:var(--shadow-cyan); }
+.game-input option { background:var(--bg-darker); color:var(--text-primary); }
+
+.hp-bar { height:20px; background:var(--bg-darker); border-radius:10px; overflow:hidden; position:relative; border:2px solid var(--neon-cyan); }
+.hp-fill { height:100%; transition:width 1s ease; position:relative; }
+.hp-fill::after { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent); animation:shimmer 2s infinite; }
+.xp-bar { height:12px; background:var(--bg-darker); border-radius:6px; overflow:hidden; border:1px solid var(--neon-purple); }
+.xp-fill { height:100%; background:linear-gradient(90deg,var(--neon-purple),var(--neon-pink)); transition:width .5s ease; }
+
+.grid-bg { background-image:linear-gradient(rgba(0,245,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.03) 1px,transparent 1px); background-size:50px 50px; }
+
+.anim-fadeInUp { animation:fadeInUp .5s ease forwards; }
+.anim-fadeIn { animation:fadeIn .3s ease forwards; }
+.anim-scaleIn { animation:scaleIn .3s ease forwards; }
+.anim-slideR { animation:slideRight .4s ease forwards; }
+
+/* Modal overlay */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.8); backdrop-filter:blur(4px); z-index:50; display:flex; align-items:center; justify-content:center; padding:16px; animation:fadeIn .2s ease; }
+.modal-content { width:100%; max-width:420px; animation:scaleIn .3s ease; }
+
+/* Toast */
+.toast { position:fixed; top:80px; right:16px; z-index:60; padding:16px; border-radius:var(--border-radius); backdrop-filter:blur(10px); animation:slideLeft .3s ease; max-width:350px; }
+
+/* Sidebar */
+.sidebar { position:fixed; top:0; left:0; bottom:0; width:280px; background:var(--bg-card); border-right:1px solid rgba(255,255,255,.1); z-index:40; transition:transform .3s; display:flex; flex-direction:column; }
+.sidebar.closed { transform:translateX(-100%); }
+.sidebar-btn { width:100%; display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:8px; transition:all .2s; border:none; background:none; cursor:pointer; font-family:inherit; font-size:15px; color:#9ca3af; text-align:left; }
+.sidebar-btn:hover { background:rgba(255,255,255,.05); color:white; }
+.sidebar-btn.active { background:linear-gradient(90deg,rgba(0,245,255,.15),rgba(157,0,255,.15)); color:white; border:1px solid rgba(0,245,255,.5); }
+
+/* Login */
+.login-bg { min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--bg-dark); position:relative; overflow:hidden; }
+.login-bg::before { content:''; position:absolute; width:600px; height:600px; background:radial-gradient(circle,rgba(0,245,255,.08),transparent 70%); top:-100px; right:-100px; }
+.login-bg::after { content:''; position:absolute; width:500px; height:500px; background:radial-gradient(circle,rgba(157,0,255,.06),transparent 70%); bottom:-100px; left:-100px; }
+
+/* Responsive */
+@media(max-width:768px) {
+  .sidebar { width:260px; }
+  .main-content { margin-left:0 !important; }
+  .grid-2 { grid-template-columns:1fr !important; }
+  .grid-4 { grid-template-columns:1fr 1fr !important; }
+  .grid-3 { grid-template-columns:1fr !important; }
+  .hide-mobile { display:none !important; }
+  .flex-col-mobile { flex-direction:column !important; }
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
+const { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, AreaChart, Area, ComposedChart, Line, Legend } = Recharts;
+
+// ==================== ICONS (SVG Components) ====================
+const Icons = {
+  LayoutDashboard: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>,
+  Receipt: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>,
+  Calendar: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>,
+  Target: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+  Zap: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+  Trophy: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
+  BarChart3: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>,
+  Settings: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
+  LogOut: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
+  Bell: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>,
+  Menu: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>,
+  X: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+  Plus: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>,
+  Trash2: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>,
+  Search: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
+  ArrowUp: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/></svg>,
+  ArrowDown: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m8 12 4 4 4-4"/><path d="M12 8v8"/></svg>,
+  TrendingUp: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
+  TrendingDown: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>,
+  Wallet: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>,
+  Star: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+  Flame: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>,
+  ChevronLeft: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>,
+  ChevronRight: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>,
+  Lock: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+  Eye: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
+  EyeOff: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>,
+  User: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  CheckCircle: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+  AlertTriangle: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>,
+  Sparkles: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>,
+  DollarSign: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+  Clock: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+};
+
+// ==================== DATA ====================
+const defaultCategories = [
+  {id:'1',name:'Salário',icon:'💰',color:'#39ff14',type:'income'},
+  {id:'2',name:'Freelance',icon:'💻',color:'#00f5ff',type:'income'},
+  {id:'3',name:'Investimentos',icon:'📈',color:'#9d00ff',type:'income'},
+  {id:'4',name:'Outros',icon:'💵',color:'#ffff00',type:'income'},
+  {id:'5',name:'Alimentação',icon:'🍔',color:'#ff6600',type:'expense'},
+  {id:'6',name:'Transporte',icon:'🚗',color:'#0080ff',type:'expense'},
+  {id:'7',name:'Moradia',icon:'🏠',color:'#ff0040',type:'expense'},
+  {id:'8',name:'Lazer',icon:'🎮',color:'#ff00ff',type:'expense'},
+  {id:'9',name:'Saúde',icon:'⚕️',color:'#00ff80',type:'expense'},
+  {id:'10',name:'Educação',icon:'📚',color:'#ffd700',type:'expense'},
+  {id:'11',name:'Compras',icon:'🛍️',color:'#ff1493',type:'expense'},
+  {id:'12',name:'Contas',icon:'💡',color:'#ff4500',type:'expense'},
+];
+const defaultAchievements = [
+  {id:'1',name:'Primeiros Passos',description:'Realize sua primeira transação',icon:'🎯',unlocked:false,condition:'first_transaction',requirement:1},
+  {id:'2',name:'Economizador',description:'Economize R$ 1000 em um mês',icon:'💎',unlocked:false,condition:'saving_streak',requirement:1000},
+  {id:'3',name:'Mestre do Orçamento',description:'Fique dentro do orçamento por 7 dias',icon:'👑',unlocked:false,condition:'budget_master',requirement:7},
+  {id:'4',name:'Controle Total',description:'Gaste menos de R$ 50 em um dia',icon:'🛡️',unlocked:false,condition:'expense_limit',requirement:50},
+  {id:'5',name:'Milionário',description:'Acumule R$ 10.000 em receitas',icon:'🏆',unlocked:false,condition:'income_goal',requirement:10000},
+];
+const defaultGoals = [
+  {id:'1',name:'Fundo de Emergência',targetAmount:5000,currentAmount:0,deadline:'2026-12-31',icon:'🛡️',color:'#39ff14'},
+  {id:'2',name:'Viagem dos Sonhos',targetAmount:8000,currentAmount:0,deadline:'2026-06-30',icon:'✈️',color:'#00f5ff'},
+];
+
+const fmt = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
+
+// ==================== LOGIN SCREEN ====================
+function LoginScreen({onLogin}) {
+  const [user, setUser] = useState('');
+  const [pass, setPass] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  const users = {jobe:'jobe2024',admin:'admin123',demo:'demo'};
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setTimeout(() => {
+      const u = user.toLowerCase().trim();
+      if (users[u] && users[u] === pass) {
+        onLogin(u === 'jobe' ? 'JOBE' : u === 'admin' ? 'Admin' : 'Demo');
+      } else {
+        setError('Usuário ou senha inválidos');
+        setLoading(false);
+      }
+    }, 800);
+  };
+
+  return (
+    <div className="login-bg grid-bg">
+      <div style={{position:'relative',zIndex:10,width:'100%',maxWidth:440,padding:'0 16px'}}>
+        <div className="glass-card" style={{padding:40,animation:'scaleIn .5s ease'}}>
+          {/* Logo */}
+          <div style={{textAlign:'center',marginBottom:32}}>
+            <div style={{width:80,height:80,margin:'0 auto 16px',borderRadius:'50%',background:'linear-gradient(135deg,#00f5ff,#9d00ff)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:36,boxShadow:'0 0 30px rgba(0,245,255,.4)'}}>
+              🎮
+            </div>
+            <h1 className="brand-text" style={{fontSize:24,background:'linear-gradient(135deg,#00f5ff,#ff00ff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',marginBottom:4}}>
+              Finance-Game
+            </h1>
+            <p style={{color:'#ffd700',fontFamily:'Orbitron',fontSize:13,letterSpacing:3}}>DO JOBE</p>
+            <p style={{color:'var(--text-muted)',marginTop:8,fontSize:14}}>Gerencie suas finanças como um jogo!</p>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            <div style={{marginBottom:16}}>
+              <label style={{color:'var(--text-secondary)',fontSize:13,marginBottom:4,display:'block'}}>Usuário</label>
+              <div style={{position:'relative'}}>
+                <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--text-muted)'}}><Icons.User/></span>
+                <input className="game-input" style={{paddingLeft:40}} placeholder="Seu usuário" value={user} onChange={e=>{setUser(e.target.value);setError('');}} required/>
+              </div>
+            </div>
+            <div style={{marginBottom:16}}>
+              <label style={{color:'var(--text-secondary)',fontSize:13,marginBottom:4,display:'block'}}>Senha</label>
+              <div style={{position:'relative'}}>
+                <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--text-muted)'}}><Icons.Lock/></span>
+                <input className="game-input" style={{paddingLeft:40,paddingRight:40}} type={showPass?'text':'password'} placeholder="Sua senha" value={pass} onChange={e=>{setPass(e.target.value);setError('');}} required/>
+                <button type="button" onClick={()=>setShowPass(!showPass)} style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',color:'var(--text-muted)',padding:4}}>
+                  {showPass ? <Icons.EyeOff/> : <Icons.Eye/>}
+                </button>
+              </div>
+            </div>
+            
+            {error && <div style={{color:'var(--neon-red)',fontSize:13,marginBottom:12,textAlign:'center',animation:'fadeIn .3s'}}>{error}</div>}
+            
+            <button type="submit" className="btn-cyber" style={{width:'100%',marginTop:8,fontSize:16,padding:'14px 24px'}} disabled={loading}>
+              {loading ? <span style={{display:'inline-block',width:20,height:20,border:'3px solid rgba(0,0,0,.2)',borderTopColor:'#0a0a0f',borderRadius:'50%',animation:'spin .6s linear infinite'}}/> : 'Entrar'}
+            </button>
+          </form>
+
+          <div style={{marginTop:24,padding:16,background:'rgba(0,245,255,.05)',borderRadius:8,border:'1px solid rgba(0,245,255,.15)'}}>
+            <p style={{color:'var(--neon-cyan)',fontSize:12,fontWeight:600,marginBottom:6}}>Contas disponíveis:</p>
+            <p style={{color:'var(--text-muted)',fontSize:12,lineHeight:1.6}}>
+              <b style={{color:'#ffd700'}}>jobe</b> / jobe2024 &nbsp;|&nbsp; <b style={{color:'#39ff14'}}>admin</b> / admin123 &nbsp;|&nbsp; <b style={{color:'#00f5ff'}}>demo</b> / demo
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== DASHBOARD ====================
+function Dashboard({state, getTotalIncome, getTotalExpense, getBalance, getDailyTotal, getTransactionsByCategory, getMonthlyData, getExpensesByDay, getRecentTransactions, getUnlockedAchievements}) {
+  const totalIncome = getTotalIncome();
+  const totalExpense = getTotalExpense();
+  const balance = getBalance();
+  const dailyTotal = getDailyTotal();
+  const gs = state.gameStats;
+  const recent = getRecentTransactions();
+  const expCat = getTransactionsByCategory('expense');
+  const monthly = getMonthlyData();
+  const daily7 = getExpensesByDay();
+  const unlocked = getUnlockedAchievements();
+  const hp = Math.min(100, Math.max(0, (balance / (totalIncome || 1)) * 100));
+
+  const tooltipStyle = {backgroundColor:'#12121a',border:'1px solid #00f5ff',borderRadius:8};
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:24}}>
+      {/* Player Status */}
+      <div className="glass-card anim-fadeInUp" style={{padding:24,position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',inset:0,background:'linear-gradient(90deg,rgba(0,245,255,.1),rgba(157,0,255,.1))'}}/>
+        <div style={{position:'relative',zIndex:1,display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:24}}>
+          <div style={{display:'flex',alignItems:'center',gap:16}}>
+            <div style={{position:'relative'}}>
+              <div style={{width:72,height:72,borderRadius:'50%',background:'linear-gradient(135deg,#ffd700,#ff6600)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,fontWeight:900,color:'#000',boxShadow:'0 0 20px rgba(255,215,0,.5)',fontFamily:'Orbitron'}}>{gs.level}</div>
+              <div style={{position:'absolute',bottom:-4,right:-4,background:'#9d00ff',borderRadius:'50%',padding:4}}><Icons.Star/></div>
+            </div>
+            <div>
+              <h2 style={{fontSize:22,color:'white',marginBottom:4}}>Nível {gs.level}</h2>
+              <div style={{width:180}}>
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--text-muted)',marginBottom:4}}><span>XP</span><span>{gs.xp}/{gs.xpToNextLevel}</span></div>
+                <div className="xp-bar"><div className="xp-fill" style={{width:`${(gs.xp/gs.xpToNextLevel)*100}%`}}/></div>
+              </div>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,background:'rgba(255,102,0,.15)',padding:'8px 16px',borderRadius:20,border:'1px solid rgba(255,102,0,.5)'}}>
+              <span style={{color:'#ff6600'}}>🔥</span>
+              <span style={{color:'#ff9944',fontWeight:700}}>{gs.streak} dias</span>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:8,background:'rgba(255,215,0,.15)',padding:'8px 16px',borderRadius:20,border:'1px solid rgba(255,215,0,.5)'}}>
+              <span style={{color:'#ffd700'}}>🏆</span>
+              <span style={{color:'#ffd700',fontWeight:700}}>{unlocked.length} conquistas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Cards */}
+      <div className="grid-4" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16}}>
+        {[
+          {label:'Receitas Totais',value:fmt(totalIncome),color:'#4ade80',bg:'rgba(74,222,128,.15)',icon:<Icons.TrendingUp/>,badge:'+12%'},
+          {label:'Despesas Totais',value:fmt(totalExpense),color:'#f87171',bg:'rgba(248,113,113,.15)',icon:<Icons.TrendingDown/>,badge:'-5%'},
+          {label:'Saldo',value:fmt(balance),color:balance>=0?'#4ade80':'#f87171',bg:balance>=0?'rgba(74,222,128,.15)':'rgba(248,113,113,.15)',icon:<Icons.Wallet/>,badge:balance>=0?'Positivo':'Negativo'},
+          {label:'Gastos do Dia',value:fmt(dailyTotal),color:'#fb923c',bg:'rgba(251,146,60,.15)',icon:<Icons.Zap/>,badge:'HOJE'},
+        ].map((c,i)=>(
+          <div key={i} className="stat-card" style={{animationDelay:`${i*.1}s`,animation:'fadeInUp .5s ease forwards',opacity:0}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+              <div style={{padding:12,borderRadius:8,background:c.bg,color:c.color}}>{c.icon}</div>
+              <span style={{fontSize:11,color:c.color,fontWeight:600}}>{c.badge}</span>
+            </div>
+            <p style={{color:'var(--text-secondary)',fontSize:13}}>{c.label}</p>
+            <p style={{fontSize:22,fontWeight:700,color:c.color,marginTop:4,fontFamily:'Orbitron'}}>{c.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* HP Bar */}
+      <div className="glass-card anim-fadeInUp" style={{padding:24,animationDelay:'.4s'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+          <h3 style={{display:'flex',alignItems:'center',gap:8,fontSize:16,color:'white'}}><span style={{color:'var(--neon-cyan)'}}><Icons.Target/></span> Saúde Financeira</h3>
+          <span style={{fontSize:13,fontWeight:700,color:hp>50?'#4ade80':hp>25?'#facc15':'#f87171'}}>{Math.round(hp)}% HP</span>
+        </div>
+        <div className="hp-bar">
+          <div className="hp-fill" style={{width:`${hp}%`,background:hp>50?'linear-gradient(90deg,#39ff14,#00f5ff)':hp>25?'linear-gradient(90deg,#ffff00,#ff6600)':'linear-gradient(90deg,#ff0040,#ff6600)'}}/>
+        </div>
+        <p style={{fontSize:13,color:'var(--text-secondary)',marginTop:12}}>{hp>50?'Excelente! Suas finanças estão saudáveis.':hp>25?'Atenção! Tente economizar mais.':'Crítico! Revise seus gastos urgentemente.'}</p>
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid-2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:24}}>
+        <div className="glass-card" style={{padding:24}}>
+          <h3 style={{fontSize:16,fontWeight:700,color:'white',marginBottom:16,display:'flex',alignItems:'center',gap:8}}><span style={{width:8,height:8,borderRadius:'50%',background:'#ff1493',display:'inline-block'}}/> Despesas por Categoria</h3>
+          {expCat.length > 0 ? (
+            <div>
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart><Pie data={expCat} cx="50%" cy="50%" innerRadius={55} outerRadius={75} paddingAngle={5} dataKey="value">
+                  {expCat.map((e,i)=><Cell key={i} fill={e.color}/>)}
+                </Pie><Tooltip formatter={v=>fmt(v)} contentStyle={tooltipStyle}/></PieChart>
+              </ResponsiveContainer>
+              <div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:8}}>
+                {expCat.map(c=><span key={c.name} style={{fontSize:11,color:c.color}}>{c.icon} {c.name}</span>)}
+              </div>
+            </div>
+          ) : <div style={{height:220,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-muted)'}}>Sem dados suficientes</div>}
+        </div>
+        <div className="glass-card" style={{padding:24}}>
+          <h3 style={{fontSize:16,fontWeight:700,color:'white',marginBottom:16,display:'flex',alignItems:'center',gap:8}}><span style={{width:8,height:8,borderRadius:'50%',background:'var(--neon-cyan)',display:'inline-block'}}/> Evolução Mensal</h3>
+          {monthly.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={monthly}>
+                <defs>
+                  <linearGradient id="gI" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#39ff14" stopOpacity={.8}/><stop offset="95%" stopColor="#39ff14" stopOpacity={0}/></linearGradient>
+                  <linearGradient id="gE" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#ff0040" stopOpacity={.8}/><stop offset="95%" stopColor="#ff0040" stopOpacity={0}/></linearGradient>
+                </defs>
+                <XAxis dataKey="month" stroke="#606070" tickFormatter={m=>{const p=m.split('-');return p[1]+'/'+p[0]}}/>
+                <YAxis stroke="#606070" tickFormatter={v=>`R$${(v/1000).toFixed(0)}k`}/>
+                <Tooltip formatter={v=>fmt(v)} contentStyle={tooltipStyle}/>
+                <Area type="monotone" dataKey="income" stroke="#39ff14" fillOpacity={1} fill="url(#gI)"/>
+                <Area type="monotone" dataKey="expense" stroke="#ff0040" fillOpacity={1} fill="url(#gE)"/>
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : <div style={{height:220,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-muted)'}}>Sem dados suficientes</div>}
+        </div>
+      </div>
+
+      {/* Daily Bar */}
+      <div className="glass-card" style={{padding:24}}>
+        <h3 style={{fontSize:16,fontWeight:700,color:'white',marginBottom:16,display:'flex',alignItems:'center',gap:8}}><span style={{width:8,height:8,borderRadius:'50%',background:'#ff6600',display:'inline-block'}}/> Gastos dos Últimos 7 Dias</h3>
+        <ResponsiveContainer width="100%" height={180}>
+          <BarChart data={daily7}>
+            <XAxis dataKey="dayName" stroke="#606070"/>
+            <YAxis stroke="#606070" tickFormatter={v=>`R$${v}`}/>
+            <Tooltip formatter={v=>fmt(v)} contentStyle={{...tooltipStyle,border:'1px solid #ff6600'}}/>
+            <Bar dataKey="total" radius={[4,4,0,0]}>
+              {daily7.map((e,i)=><Cell key={i} fill={e.total>100?'#ff0040':e.total>50?'#ff6600':'#39ff14'}/>)}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Recent Transactions */}
+      <div className="glass-card" style={{padding:24}}>
+        <h3 style={{fontSize:16,fontWeight:700,color:'white',marginBottom:16}}>Transações Recentes</h3>
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          {recent.length > 0 ? recent.slice(0,5).map(t=>(
+            <div key={t.id} className="anim-slideR" style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:12,background:'rgba(255,255,255,.03)',borderRadius:8,transition:'background .2s',cursor:'default'}}
+              onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.07)'}
+              onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.03)'}>
+              <div style={{display:'flex',alignItems:'center',gap:12}}>
+                <div style={{width:40,height:40,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:t.type==='income'?'rgba(74,222,128,.15)':'rgba(248,113,113,.15)',fontSize:18}}>
+                  {(defaultCategories.find(c=>c.name===t.category)||{icon:'💰'}).icon}
+                </div>
+                <div>
+                  <p style={{color:'white',fontWeight:500}}>{t.description}</p>
+                  <p style={{color:'var(--text-muted)',fontSize:12}}>{t.category} • {new Date(t.date+'T12:00:00').toLocaleDateString('pt-BR')}</p>
+                </div>
+              </div>
+              <span style={{fontWeight:700,color:t.type==='income'?'#4ade80':'#f87171',fontFamily:'Orbitron',fontSize:14}}>{t.type==='income'?'+':'-'}{fmt(t.amount)}</span>
+            </div>
+          )) : <div style={{textAlign:'center',padding:32,color:'var(--text-muted)'}}>Nenhuma transação ainda. Adicione sua primeira!</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== TRANSACTIONS ====================
+function Transactions({state, categories, onAdd, onDelete}) {
+  const [show, setShow] = useState(false);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [form, setForm] = useState({type:'expense',amount:'',category:'',description:'',date:new Date().toISOString().split('T')[0]});
+  
+  const filtered = state.transactions.filter(t => {
+    const ms = t.description.toLowerCase().includes(search.toLowerCase()) || t.category.toLowerCase().includes(search.toLowerCase());
+    return ms && (filter==='all' || t.type===filter);
+  });
+
+  const submit = e => {
+    e.preventDefault();
+    if (!form.amount||!form.category||!form.description) return;
+    onAdd({type:form.type,amount:parseFloat(form.amount),category:form.category,description:form.description,date:form.date});
+    setForm({type:'expense',amount:'',category:'',description:'',date:new Date().toISOString().split('T')[0]});
+    setShow(false);
+  };
+
+  const cats = categories.filter(c=>c.type===form.type);
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:24}}>
+      <div className="anim-fadeInUp" style={{display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:16}}>
+        <h2 style={{fontSize:22,color:'white',display:'flex',alignItems:'center',gap:8}}><span style={{width:10,height:10,borderRadius:'50%',background:'var(--neon-cyan)',animation:'pulse-glow 2s infinite'}}/> Transações</h2>
+        <button className="btn-cyber" onClick={()=>setShow(true)} style={{display:'flex',alignItems:'center',gap:8}}><Icons.Plus/> Nova Transação</button>
+      </div>
+
+      <div className="glass-card" style={{padding:16,display:'flex',flexWrap:'wrap',gap:12}}>
+        <div style={{flex:1,minWidth:200,position:'relative'}}>
+          <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--text-muted)'}}><Icons.Search/></span>
+          <input className="game-input" style={{paddingLeft:40}} placeholder="Buscar transações..." value={search} onChange={e=>setSearch(e.target.value)}/>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          {[{k:'all',l:'Todas',c:'var(--neon-cyan)'},{k:'income',l:'Receitas',c:'#4ade80'},{k:'expense',l:'Despesas',c:'#f87171'}].map(f=>(
+            <button key={f.k} onClick={()=>setFilter(f.k)} style={{padding:'8px 16px',borderRadius:8,fontWeight:500,transition:'all .2s',border:filter===f.k?`1px solid ${f.c}`:'1px solid transparent',background:filter===f.k?f.c+'20':'rgba(255,255,255,.05)',color:filter===f.k?f.c:'var(--text-muted)',cursor:'pointer',fontFamily:'inherit',fontSize:14}}>
+              {f.l}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{display:'flex',flexDirection:'column',gap:12}}>
+        {filtered.length > 0 ? filtered.map((t,i)=>(
+          <div key={t.id} className="glass-card" style={{padding:16,display:'flex',alignItems:'center',justifyContent:'space-between',transition:'all .2s',animation:`slideRight .4s ease ${i*.03}s forwards`,opacity:0}}
+            onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(0,245,255,.5)'}
+            onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(255,255,255,.1)'}>
+            <div style={{display:'flex',alignItems:'center',gap:16}}>
+              <div style={{width:48,height:48,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,background:t.type==='income'?'rgba(74,222,128,.15)':'rgba(248,113,113,.15)'}}>
+                {(categories.find(c=>c.name===t.category)||{icon:'💰'}).icon}
+              </div>
+              <div>
+                <p style={{color:'white',fontWeight:500,fontSize:15}}>{t.description}</p>
+                <div style={{display:'flex',alignItems:'center',gap:8,fontSize:12,color:'var(--text-muted)'}}>
+                  <span style={{padding:'2px 8px',borderRadius:12,background:'rgba(255,255,255,.08)'}}>{t.category}</span>
+                  <span>•</span>
+                  <span>{new Date(t.date+'T12:00:00').toLocaleDateString('pt-BR')}</span>
+                </div>
+              </div>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:16}}>
+              <span style={{fontSize:18,fontWeight:700,color:t.type==='income'?'#4ade80':'#f87171',fontFamily:'Orbitron'}}>{t.type==='income'?'+':'-'}{fmt(t.amount)}</span>
+              <button onClick={()=>onDelete(t.id)} style={{padding:8,borderRadius:8,background:'rgba(248,113,113,.15)',color:'#f87171',border:'none',cursor:'pointer',transition:'background .2s'}}
+                onMouseEnter={e=>e.currentTarget.style.background='rgba(248,113,113,.3)'}
+                onMouseLeave={e=>e.currentTarget.style.background='rgba(248,113,113,.15)'}><Icons.Trash2/></button>
+            </div>
+          </div>
+        )) : <div style={{textAlign:'center',padding:48,color:'var(--text-muted)'}}><div style={{fontSize:48,marginBottom:12}}>📭</div><p style={{fontSize:16}}>Nenhuma transação encontrada</p></div>}
+      </div>
+
+      {show && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShow(false)}>
+          <div className="modal-content glass-card" style={{padding:24,position:'relative'}}>
+            <button onClick={()=>setShow(false)} style={{position:'absolute',top:16,right:16,background:'none',border:'none',cursor:'pointer',color:'var(--text-muted)',padding:4}}><Icons.X/></button>
+            <h3 style={{fontSize:18,color:'white',marginBottom:20,display:'flex',alignItems:'center',gap:8}}><span style={{color:'var(--neon-cyan)'}}><Icons.Plus/></span> Nova Transação</h3>
+            <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:16}}>
+              <div style={{display:'flex',gap:8}}>
+                {['income','expense'].map(t=>(
+                  <button key={t} type="button" onClick={()=>setForm({...form,type:t,category:''})}
+                    style={{flex:1,padding:12,borderRadius:8,fontWeight:500,transition:'all .2s',border:`1px solid ${form.type===t?(t==='income'?'#4ade80':'#f87171'):'transparent'}`,
+                      background:form.type===t?(t==='income'?'rgba(74,222,128,.15)':'rgba(248,113,113,.15)'):'rgba(255,255,255,.05)',
+                      color:form.type===t?(t==='income'?'#4ade80':'#f87171'):'var(--text-muted)',cursor:'pointer',fontFamily:'inherit',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+                    {t==='income'?<><Icons.ArrowUp/> Receita</>:<><Icons.ArrowDown/> Despesa</>}
+                  </button>
+                ))}
+              </div>
+              <div><label style={{color:'var(--text-secondary)',fontSize:13,marginBottom:4,display:'block'}}>Valor</label><input className="game-input" type="number" step="0.01" min="0" placeholder="0,00" value={form.amount} onChange={e=>setForm({...form,amount:e.target.value})} required/></div>
+              <div><label style={{color:'var(--text-secondary)',fontSize:13,marginBottom:4,display:'block'}}>Categoria</label>
+                <select className="game-input" value={form.category} onChange={e=>setForm({...form,category:e.target.value})} required>
+                  <option value="">Selecione...</option>
+                  {cats.map(c=><option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}
+                </select>
+              </div>
+              <div><label style={{color:'var(--text-secondary)',fontSize:13,marginBottom:4,display:'block'}}>Descrição</label><input className="game-input" placeholder="Ex: Supermercado" value={form.description} onChange={e=>setForm({...form,description:e.target.value})} required/></div>
+              <div><label style={{color:'var(--text-secondary)',fontSize:13,marginBottom:4,display:'block'}}>Data</label><input className="game-input" type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value})} required/></div>
+              <button type="submit" className="btn-cyber" style={{width:'100%',marginTop:8}}>Adicionar Transação</button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================== DAILY EXPENSES ====================
+function DailyExpenses({transactions}) {
+  const [sel, setSel] = useState(new Date().toISOString().split('T')[0]);
+  const nav = d => { const dt = new Date(sel+'T12:00:00'); dt.setDate(dt.getDate()+(d==='next'?1:-1)); setSel(dt.toISOString().split('T')[0]); };
+  const dayT = useMemo(()=>transactions.filter(t=>t.date===sel&&t.type==='expense'),[transactions,sel]);
+  const dayTotal = useMemo(()=>dayT.reduce((s,t)=>s+t.amount,0),[dayT]);
+  const avg = useMemo(()=>{const e=transactions.filter(t=>t.type==='expense');if(!e.length)return 0;const d=new Set(e.map(t=>t.date));return e.reduce((s,t)=>s+t.amount,0)/d.size;},[transactions]);
+  const last7 = useMemo(()=>{const d=[];for(let i=6;i>=0;i--){const dt=new Date();dt.setDate(dt.getDate()-i);const s=dt.toISOString().split('T')[0];const tot=transactions.filter(t=>t.date===s&&t.type==='expense').reduce((a,t)=>a+t.amount,0);d.push({date:s,dayName:dt.toLocaleDateString('pt-BR',{weekday:'short'}),total:tot,isSelected:s===sel});}return d;},[transactions,sel]);
+  
+  const status = dayTotal===0?{icon:'✨',text:'Sem gastos!',color:'#39ff14',msg:'Dia perfeito!'}:dayTotal<=avg*.5?{icon:'🌟',text:'Excelente!',color:'#00f5ff',msg:'Economizando muito!'}:dayTotal<=avg?{icon:'👍',text:'Bom',color:'#ffff00',msg:'Dentro da média'}:dayTotal<=avg*1.5?{icon:'⚠️',text:'Atenção',color:'#ff6600',msg:'Acima da média'}:{icon:'🚨',text:'Crítico',color:'#ff0040',msg:'Gastos muito altos!'};
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:24}}>
+      <div className="flex-col-mobile" style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:16}}>
+        <h2 style={{fontSize:22,color:'white',display:'flex',alignItems:'center',gap:8}}><span style={{color:'#ff6600'}}><Icons.Calendar/></span> Gastos Diários</h2>
+        <div className="glass-card" style={{padding:8,display:'flex',alignItems:'center',gap:8}}>
+          <button onClick={()=>nav('prev')} style={{padding:8,borderRadius:8,background:'none',border:'none',cursor:'pointer',color:'var(--neon-cyan)'}}><Icons.ChevronLeft/></button>
+          <div style={{padding:'0 16px',textAlign:'center'}}><p style={{color:'white',fontWeight:500}}>{new Date(sel+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})}</p>
+          {sel===new Date().toISOString().split('T')[0]&&<span style={{fontSize:11,color:'var(--neon-cyan)'}}>HOJE</span>}</div>
+          <button onClick={()=>nav('next')} style={{padding:8,borderRadius:8,background:'none',border:'none',cursor:'pointer',color:'var(--neon-cyan)'}}><Icons.ChevronRight/></button>
+        </div>
+      </div>
+
+      <div className="glass-card" style={{padding:24,position:'relative',overflow:'hidden',borderColor:status.color}}>
+        <div style={{position:'absolute',inset:0,opacity:.1,background:`linear-gradient(135deg,${status.color},transparent)`}}/>
+        <div style={{position:'relative',zIndex:1}}>
+          <div className="flex-col-mobile" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+            <div style={{display:'flex',alignItems:'center',gap:16}}>
+              <div style={{width:56,height:56,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,background:`${status.color}20`,border:`2px solid ${status.color}`}}>{status.icon}</div>
+              <div><p style={{color:'var(--text-muted)',fontSize:13}}>Status do Dia</p><p style={{fontSize:22,fontWeight:700,color:status.color}}>{status.text}</p></div>
+            </div>
+            <div style={{textAlign:'right'}}><p style={{color:'var(--text-muted)',fontSize:13}}>Total Gasto</p><p style={{fontSize:32,fontWeight:700,color:status.color,fontFamily:'Orbitron'}}>{fmt(dayTotal)}</p></div>
+          </div>
+          <p style={{fontSize:13,color:status.color,display:'flex',alignItems:'center',gap:4}}>{dayTotal>avg?<Icons.AlertTriangle/>:<Icons.CheckCircle/>} {status.msg}</p>
+        </div>
+      </div>
+
+      <div className="glass-card" style={{padding:24}}>
+        <h3 style={{fontSize:16,fontWeight:700,color:'white',marginBottom:16,display:'flex',alignItems:'center',gap:8}}><span style={{color:'var(--neon-cyan)'}}><Icons.TrendingDown/></span> Últimos 7 Dias</h3>
+        <ResponsiveContainer width="100%" height={180}>
+          <BarChart data={last7}><XAxis dataKey="dayName" stroke="#606070"/><YAxis stroke="#606070" tickFormatter={v=>`R$${v}`}/><Tooltip formatter={v=>fmt(v)} contentStyle={{backgroundColor:'#12121a',border:'1px solid #00f5ff',borderRadius:8}}/>
+            <Bar dataKey="total" radius={[4,4,0,0]}>{last7.map((e,i)=><Cell key={i} fill={e.isSelected?'#00f5ff':e.total>avg?'#ff0040':'#39ff14'} stroke={e.isSelected?'#fff':'none'} strokeWidth={e.isSelected?2:0}/>)}</Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="glass-card" style={{padding:24}}>
+        <h3 style={{fontSize:16,fontWeight:700,color:'white',marginBottom:16,display:'flex',alignItems:'center',gap:8}}><span style={{color:'#a855f7'}}><Icons.Clock/></span> Transações do Dia</h3>
+        {dayT.length > 0 ? dayT.map(t=>(
+          <div key={t.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:12,background:'rgba(255,255,255,.03)',borderRadius:8,marginBottom:8}}>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <div style={{width:40,height:40,borderRadius:'50%',background:'rgba(248,113,113,.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{(defaultCategories.find(c=>c.name===t.category)||{icon:'💰'}).icon}</div>
+              <div><p style={{color:'white',fontWeight:500}}>{t.description}</p><p style={{color:'var(--text-muted)',fontSize:12}}>{t.category}</p></div>
+            </div>
+            <span style={{fontWeight:700,color:'#f87171'}}>-{fmt(t.amount)}</span>
+          </div>
+        )) : <div style={{textAlign:'center',padding:32}}><div style={{fontSize:48,marginBottom:8}}>🎉</div><p style={{color:'var(--text-muted)'}}>Nenhum gasto neste dia!</p></div>}
+      </div>
+    </div>
+  );
+}
+
+// ==================== BUDGET ====================
+function BudgetView({state, categories, onAdd, onDelete}) {
+  const [show, setShow] = useState(false);
+  const [form, setForm] = useState({categoryId:'',limit:'',period:'monthly'});
+  const catsNoBudget = categories.filter(c=>c.type==='expense'&&!state.budgets.some(b=>b.categoryId===c.id));
+  const getSpent = id => {const c=categories.find(x=>x.id===id);if(!c)return 0;return state.transactions.filter(t=>t.type==='expense'&&t.category===c.name).reduce((s,t)=>s+t.amount,0);};
+  const bws = state.budgets.map(b=>({...b,spent:getSpent(b.categoryId),cat:categories.find(c=>c.id===b.categoryId)}));
+
+  const submit = e => {e.preventDefault();if(!form.categoryId||!form.limit)return;onAdd({categoryId:form.categoryId,limit:parseFloat(form.limit),period:form.period});setForm({categoryId:'',limit:'',period:'monthly'});setShow(false);};
+  const stColor = (s,l)=>{const p=(s/l)*100;return p>=100?'#ff0040':p>=80?'#ff6600':p>=50?'#ffff00':'#39ff14';};
+  const stIcon = (s,l)=>{const p=(s/l)*100;return p>=100?'🚨':p>=80?'⚠️':p>=50?'👍':'✅';};
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:24}}>
+      <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:16}}>
+        <h2 style={{fontSize:22,color:'white',display:'flex',alignItems:'center',gap:8}}><span style={{color:'#a855f7'}}><Icons.Target/></span> Orçamentos</h2>
+        <button className="btn-cyber" onClick={()=>setShow(true)} disabled={catsNoBudget.length===0} style={{display:'flex',alignItems:'center',gap:8}}><Icons.Plus/> Novo Orçamento</button>
+      </div>
+
+      <div className="grid-3" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+        {[{l:'Total Orçamentos',v:fmt(state.budgets.reduce((s,b)=>s+b.limit,0)),c:'var(--neon-cyan)',bg:'rgba(0,245,255,.15)',ic:<Icons.Wallet/>},
+          {l:'Total Gasto',v:fmt(bws.reduce((s,b)=>s+b.spent,0)),c:'#f87171',bg:'rgba(248,113,113,.15)',ic:<Icons.AlertTriangle/>},
+          {l:'Disponível',v:fmt(bws.reduce((s,b)=>s+(b.limit-b.spent),0)),c:'#4ade80',bg:'rgba(74,222,128,.15)',ic:<Icons.CheckCircle/>}
+        ].map((c,i)=>(
+          <div key={i} className="glass-card" style={{padding:16}}><div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}><div style={{padding:8,borderRadius:8,background:c.bg,color:c.c}}>{c.ic}</div><span style={{color:'var(--text-muted)',fontSize:13}}>{c.l}</span></div><p style={{fontSize:22,fontWeight:700,color:c.c,fontFamily:'Orbitron'}}>{c.v}</p></div>
+        ))}
+      </div>
+
+      <div className="grid-2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        {bws.length > 0 ? bws.map((b,i)=>{
+          const pct = Math.min(100,(b.spent/b.limit)*100);
+          const sc = stColor(b.spent,b.limit);
+          return (
+            <div key={b.categoryId} className="glass-card" style={{padding:20,borderColor:sc,position:'relative',overflow:'hidden'}}>
+              <div style={{position:'absolute',inset:0,opacity:.05,background:`linear-gradient(135deg,${sc},transparent)`}}/>
+              <div style={{position:'relative',zIndex:1}}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:16}}>
+                  <div style={{display:'flex',alignItems:'center',gap:12}}><div style={{width:48,height:48,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,background:`${b.cat?.color||sc}20`}}>{b.cat?.icon}</div><div><h3 style={{color:'white',fontWeight:500}}>{b.cat?.name}</h3><p style={{color:'var(--text-muted)',fontSize:12}}>{b.period==='daily'?'Diário':b.period==='weekly'?'Semanal':'Mensal'}</p></div></div>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}><span style={{fontSize:20}}>{stIcon(b.spent,b.limit)}</span><button onClick={()=>onDelete(b.categoryId)} style={{padding:8,borderRadius:8,background:'none',border:'none',cursor:'pointer',color:'#f87171'}}><Icons.Trash2/></button></div>
+                </div>
+                <div style={{marginBottom:4}}><div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:4}}><span style={{color:'var(--text-muted)'}}>{fmt(b.spent)} / {fmt(b.limit)}</span><span style={{color:sc,fontWeight:700}}>{pct.toFixed(0)}%</span></div>
+                  <div style={{height:12,background:'rgba(255,255,255,.08)',borderRadius:6,overflow:'hidden'}}><div style={{height:'100%',borderRadius:6,width:`${pct}%`,background:`linear-gradient(90deg,${sc},${sc}80)`,transition:'width .5s',boxShadow:`0 0 10px ${sc}50`}}/></div>
+                </div>
+                {pct>=100&&<div style={{marginTop:12,padding:8,borderRadius:8,background:'rgba(255,0,64,.15)',border:'1px solid rgba(255,0,64,.4)',display:'flex',alignItems:'center',gap:8,fontSize:12,color:'#f87171'}}><Icons.AlertTriangle/> Orçamento estourado!</div>}
+              </div>
+            </div>
+          );
+        }) : <div className="glass-card" style={{gridColumn:'1/-1',textAlign:'center',padding:48}}><div style={{fontSize:48,marginBottom:12}}>🎯</div><p style={{color:'var(--text-muted)',fontSize:16}}>Nenhum orçamento definido</p></div>}
+      </div>
+
+      {show && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShow(false)}>
+          <div className="modal-content glass-card" style={{padding:24,position:'relative'}}>
+            <button onClick={()=>setShow(false)} style={{position:'absolute',top:16,right:16,background:'none',border:'none',cursor:'pointer',color:'var(--text-muted)'}}><Icons.X/></button>
+            <h3 style={{fontSize:18,color:'white',marginBottom:20,display:'flex',alignItems:'center',gap:8}}><span style={{color:'#a855f7'}}><Icons.Target/></span> Novo Orçamento</h3>
+            <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:16}}>
+              <div><label style={{color:'var(--text-secondary)',fontSize:13,marginBottom:4,display:'block'}}>Categoria</label>
+                <select className="game-input" value={form.categoryId} onChange={e=>setForm({...form,categoryId:e.target.value})} required><option value="">Selecione...</option>{catsNoBudget.map(c=><option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}</select></div>
+              <div><label style={{color:'var(--text-secondary)',fontSize:13,marginBottom:4,display:'block'}}>Limite</label><input className="game-input" type="number" step="0.01" min="0" placeholder="0,00" value={form.limit} onChange={e=>setForm({...form,limit:e.target.value})} required/></div>
+              <div><label style={{color:'var(--text-secondary)',fontSize:13,marginBottom:4,display:'block'}}>Período</label>
+                <div style={{display:'flex',gap:8}}>{[{k:'daily',l:'Diário'},{k:'weekly',l:'Semanal'},{k:'monthly',l:'Mensal'}].map(p=>(
+                  <button key={p.k} type="button" onClick={()=>setForm({...form,period:p.k})} style={{flex:1,padding:10,borderRadius:8,fontWeight:500,border:form.period===p.k?'1px solid #a855f7':'1px solid transparent',background:form.period===p.k?'rgba(168,85,247,.15)':'rgba(255,255,255,.05)',color:form.period===p.k?'#a855f7':'var(--text-muted)',cursor:'pointer',fontFamily:'inherit',fontSize:14}}>{p.l}</button>
+                ))}</div></div>
+              <button type="submit" className="btn-cyber" style={{width:'100%',marginTop:8}}>Criar Orçamento</button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================== GOALS ====================
+function GoalsView({state, onAdd, onDelete, onContribute}) {
+  const [show, setShow] = useState(false);
+  const [showC, setShowC] = useState(null);
+  const [cAmt, setCAmt] = useState('');
+  const [form, setForm] = useState({name:'',targetAmount:'',deadline:'',icon:'🎯',color:'#00f5ff'});
+  const icons = ['🎯','✈️','🚗','🏠','🎓','💍','🛡️','🎮','💻','📱','✨','💎'];
+  const colors = ['#00f5ff','#ff00ff','#39ff14','#ffff00','#ff6600','#ff0040','#9d00ff','#0080ff'];
+
+  const submit = e => {e.preventDefault();if(!form.name||!form.targetAmount||!form.deadline)return;onAdd({name:form.name,targetAmount:parseFloat(form.targetAmount),deadline:form.deadline,icon:form.icon,color:form.color});setForm({name:'',targetAmount:'',deadline:'',icon:'🎯',color:'#00f5ff'});setShow(false);};
+  const submitC = e => {e.preventDefault();if(!showC||!cAmt)return;onContribute(showC,parseFloat(cAmt));setCAmt('');setShowC(null);};
+  const daysLeft = d => Math.ceil((new Date(d).getTime()-Date.now())/(86400000));
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:24}}>
+      <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:16}}>
+        <h2 style={{fontSize:22,color:'white',display:'flex',alignItems:'center',gap:8}}><span style={{color:'#22c55e'}}><Icons.Target/></span> Metas Financeiras</h2>
+        <button className="btn-cyber" onClick={()=>setShow(true)} style={{display:'flex',alignItems:'center',gap:8}}><Icons.Plus/> Nova Meta</button>
+      </div>
+
+      <div className="grid-3" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+        <div className="glass-card" style={{padding:16}}><div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}><div style={{padding:8,borderRadius:8,background:'rgba(0,245,255,.15)',color:'var(--neon-cyan)'}}><Icons.Target/></div><span style={{color:'var(--text-muted)',fontSize:13}}>Total em Metas</span></div><p style={{fontSize:20,fontWeight:700,color:'white',fontFamily:'Orbitron'}}>{fmt(state.goals.reduce((s,g)=>s+g.targetAmount,0))}</p></div>
+        <div className="glass-card" style={{padding:16}}><div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}><div style={{padding:8,borderRadius:8,background:'rgba(74,222,128,.15)',color:'#4ade80'}}><Icons.TrendingUp/></div><span style={{color:'var(--text-muted)',fontSize:13}}>Junto</span></div><p style={{fontSize:20,fontWeight:700,color:'#4ade80',fontFamily:'Orbitron'}}>{fmt(state.goals.reduce((s,g)=>s+g.currentAmount,0))}</p></div>
+        <div className="glass-card" style={{padding:16}}><div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}><div style={{padding:8,borderRadius:8,background:'rgba(168,85,247,.15)',color:'#a855f7'}}><Icons.CheckCircle/></div><span style={{color:'var(--text-muted)',fontSize:13}}>Concluídas</span></div><p style={{fontSize:20,fontWeight:700,color:'#a855f7',fontFamily:'Orbitron'}}>{state.goals.filter(g=>g.currentAmount>=g.targetAmount).length}/{state.goals.length}</p></div>
+      </div>
+
+      <div className="grid-2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        {state.goals.length > 0 ? state.goals.map((g,i)=>{
+          const pct=Math.min(100,(g.currentAmount/g.targetAmount)*100);const done=g.currentAmount>=g.targetAmount;const dl=daysLeft(g.deadline);
+          const pc=pct>=100?'#39ff14':pct>=75?'#00f5ff':pct>=50?'#ffff00':pct>=25?'#ff6600':'#ff0040';
+          return (
+            <div key={g.id} className="glass-card" style={{padding:20,borderColor:done?'#39ff14':g.color,position:'relative',overflow:'hidden'}}>
+              {done&&<div style={{position:'absolute',inset:0,background:'linear-gradient(135deg,rgba(57,255,20,.15),transparent)',pointerEvents:'none'}}/>}
+              <div style={{position:'relative',zIndex:1}}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:16}}>
+                  <div style={{display:'flex',alignItems:'center',gap:12}}>
+                    <div style={{width:52,height:52,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,background:`${g.color}20`,border:`2px solid ${done?'#39ff14':g.color}`,boxShadow:done?'0 0 20px rgba(57,255,20,.4)':'none'}}>{done?'🎉':g.icon}</div>
+                    <div><h3 style={{color:'white',fontWeight:500}}>{g.name}</h3><p style={{color:'var(--text-muted)',fontSize:12,display:'flex',alignItems:'center',gap:4}}><Icons.Calendar/> {dl>0?`${dl} dias restantes`:'Prazo vencido'}</p></div>
+                  </div>
+                  <button onClick={()=>onDelete(g.id)} style={{padding:8,borderRadius:8,background:'none',border:'none',cursor:'pointer',color:'#f87171',alignSelf:'flex-start'}}><Icons.Trash2/></button>
+                </div>
+                <div style={{marginBottom:16}}>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:6}}><span style={{color:'var(--text-muted)'}}>{fmt(g.currentAmount)} / {fmt(g.targetAmount)}</span><span style={{color:pc,fontWeight:700}}>{pct.toFixed(0)}%</span></div>
+                  <div style={{height:16,background:'rgba(255,255,255,.08)',borderRadius:8,overflow:'hidden',position:'relative'}}><div style={{height:'100%',borderRadius:8,width:`${pct}%`,background:`linear-gradient(90deg,${g.color},${pc})`,transition:'width .5s'}}/></div>
+                </div>
+                {!done ? <button onClick={()=>setShowC(g.id)} style={{width:'100%',padding:10,borderRadius:8,fontWeight:500,background:`${g.color}20`,color:g.color,border:`1px solid ${g.color}`,cursor:'pointer',fontFamily:'inherit',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}><Icons.Plus/> Contribuir</button>
+                  : <div style={{width:'100%',padding:10,borderRadius:8,background:'rgba(57,255,20,.15)',color:'#39ff14',border:'1px solid #39ff14',display:'flex',alignItems:'center',justifyContent:'center',gap:8,fontSize:14}}><Icons.Sparkles/> Meta Concluída!</div>}
+              </div>
+            </div>
+          );
+        }) : <div className="glass-card" style={{gridColumn:'1/-1',textAlign:'center',padding:48}}><div style={{fontSize:48,marginBottom:12}}>🎯</div><p style={{color:'var(--text-muted)',fontSize:16}}>Nenhuma meta definida</p></div>}
+      </div>
+
+      {show && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShow(false)}>
+          <div className="modal-content glass-card" style={{padding:24,position:'relative'}}>
+            <button onClick={()=>setShow(false)} style={{position:'absolute',top:16,right:16,background:'none',border:'none',cursor:'pointer',color:'var(--text-muted)'}}><Icons.X/></button>
+            <h3 style={{fontSize:18,color:'white',marginBottom:20}}>Nova Meta</h3>
+            <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:16}}>
+              <div><label style={{color:'var(--text-secondary)',fontSize:13,marginBottom:4,display:'block'}}>Nome</label><input className="game-input" placeholder="Ex: Viagem" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required/></div>
+              <div><label style={{color:'var(--text-secondary)',fontSize:13,marginBottom:4,display:'block'}}>Valor Alvo</label><input className="game-input" type="number" step="0.01" min="0" placeholder="0,00" value={form.targetAmount} onChange={e=>setForm({...form,targetAmount:e.target.value})} required/></div>
+              <div><label style={{color:'var(--text-secondary)',fontSize:13,marginBottom:4,display:'block'}}>Data Limite</label><input className="game-input" type="date" value={form.deadline} onChange={e=>setForm({...form,deadline:e.target.value})} required/></div>
+              <div><label style={{color:'var(--text-secondary)',fontSize:13,marginBottom:4,display:'block'}}>Ícone</label><div style={{display:'flex',flexWrap:'wrap',gap:8}}>{icons.map(ic=>(<button key={ic} type="button" onClick={()=>setForm({...form,icon:ic})} style={{width:40,height:40,borderRadius:8,fontSize:20,border:form.icon===ic?'1px solid var(--neon-cyan)':'1px solid transparent',background:form.icon===ic?'rgba(0,245,255,.15)':'rgba(255,255,255,.05)',cursor:'pointer'}}>{ic}</button>))}</div></div>
+              <div><label style={{color:'var(--text-secondary)',fontSize:13,marginBottom:4,display:'block'}}>Cor</label><div style={{display:'flex',flexWrap:'wrap',gap:8}}>{colors.map(cl=>(<button key={cl} type="button" onClick={()=>setForm({...form,color:cl})} style={{width:36,height:36,borderRadius:8,background:cl,border:'none',cursor:'pointer',outline:form.color===cl?'2px solid white':'none',outlineOffset:2,transition:'all .2s'}}/>))}</div></div>
+              <button type="submit" className="btn-cyber" style={{width:'100%',marginTop:8}}>Criar Meta</button>
+            </form>
+          </div>
+        </div>
+      )}
+      {showC && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowC(null)}>
+          <div className="modal-content glass-card" style={{padding:24,position:'relative',maxWidth:340}}>
+            <button onClick={()=>setShowC(null)} style={{position:'absolute',top:16,right:16,background:'none',border:'none',cursor:'pointer',color:'var(--text-muted)'}}><Icons.X/></button>
+            <h3 style={{fontSize:18,color:'white',marginBottom:16}}>Contribuir</h3>
+            <form onSubmit={submitC} style={{display:'flex',flexDirection:'column',gap:16}}>
+              <div><label style={{color:'var(--text-secondary)',fontSize:13,marginBottom:4,display:'block'}}>Valor</label><input className="game-input" type="number" step="0.01" min="0" placeholder="0,00" value={cAmt} onChange={e=>setCAmt(e.target.value)} autoFocus required style={{textAlign:'center',fontSize:20}}/></div>
+              <button type="submit" className="btn-cyber" style={{width:'100%'}}>Confirmar Contribuição</button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================== ACHIEVEMENTS ====================
+function AchievementsView({achievements}) {
+  const ul = achievements.filter(a=>a.unlocked).length;
+  const pct = (ul/achievements.length)*100;
+  const rc = ['#ffd700','#c0c0c0','#cd7f32','#9d00ff','#00f5ff'];
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:24}}>
+      <div className="glass-card anim-fadeInUp" style={{padding:24,position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',inset:0,background:'linear-gradient(90deg,rgba(255,215,0,.08),rgba(157,0,255,.08),rgba(0,245,255,.08))'}}/>
+        <div style={{position:'relative',zIndex:1}}>
+          <div className="flex-col-mobile" style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:24}}>
+            <div style={{display:'flex',alignItems:'center',gap:16}}><div style={{width:72,height:72,borderRadius:'50%',background:'linear-gradient(135deg,#ffd700,#ff6600)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 0 20px rgba(255,215,0,.3)'}}><span style={{fontSize:32}}>🏆</span></div><div><h2 style={{fontSize:22,color:'white'}}>Conquistas</h2><p style={{color:'var(--text-muted)'}}>Desbloqueie todas!</p></div></div>
+            <div style={{textAlign:'center'}}><p style={{fontSize:36,fontWeight:700,color:'#ffd700',fontFamily:'Orbitron'}}>{ul}/{achievements.length}</p><p style={{color:'var(--text-muted)',fontSize:13}}>Desbloqueadas</p></div>
+          </div>
+          <div style={{marginTop:20}}><div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:6}}><span style={{color:'var(--text-muted)'}}>Progresso Geral</span><span style={{color:'#ffd700',fontWeight:700}}>{pct.toFixed(0)}%</span></div>
+            <div style={{height:12,background:'rgba(255,255,255,.08)',borderRadius:6,overflow:'hidden'}}><div style={{height:'100%',borderRadius:6,background:'linear-gradient(90deg,#ffd700,#ff6600,#ffd700)',width:`${pct}%`,transition:'width 1s'}}/></div></div>
+        </div>
+      </div>
+
+      <div className="grid-3" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+        {achievements.map((a,i)=>{
+          const clr = rc[i%rc.length];
+          return (
+            <div key={a.id} className="glass-card" style={{padding:20,position:'relative',overflow:'hidden',borderColor:a.unlocked?'rgba(255,215,0,.4)':'rgba(75,85,99,.4)',opacity:a.unlocked?1:.7,transition:'all .3s'}}>
+              {a.unlocked&&<div style={{position:'absolute',inset:0,opacity:.15,background:`radial-gradient(circle,${clr},transparent 70%)`}}/>}
+              <div style={{position:'relative',zIndex:1}}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:16}}>
+                  <div style={{width:60,height:60,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,background:a.unlocked?`${clr}30`:'#1a1a25',border:`2px solid ${a.unlocked?clr:'#333'}`,boxShadow:a.unlocked?`0 0 20px ${clr}40`:'none'}}>
+                    {a.unlocked ? a.icon : <Icons.Lock/>}
+                  </div>
+                  {a.unlocked&&<div style={{display:'flex',alignItems:'center',gap:4,color:'#ffd700',fontSize:12,fontWeight:700}}><Icons.Star/> +XP</div>}
+                </div>
+                <h3 style={{fontSize:16,fontWeight:700,color:a.unlocked?'white':'#6b7280',marginBottom:4}}>{a.name}</h3>
+                <p style={{fontSize:12,color:a.unlocked?'var(--text-muted)':'#4b5563',marginBottom:12}}>{a.description}</p>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <span style={{fontSize:12,color:a.unlocked?'#4ade80':'#6b7280',display:'flex',alignItems:'center',gap:4}}>{a.unlocked?<><Icons.Sparkles/> Desbloqueada!</>:<><Icons.Lock/> Bloqueada</>}</span>
+                  {a.unlockedAt&&<span style={{fontSize:11,color:'#6b7280'}}>{new Date(a.unlockedAt).toLocaleDateString('pt-BR')}</span>}
+                </div>
+                <div style={{marginTop:12,height:4,background:'rgba(255,255,255,.08)',borderRadius:2,overflow:'hidden'}}><div style={{height:'100%',borderRadius:2,background:clr,width:a.unlocked?'100%':'30%',opacity:a.unlocked?1:.3}}/></div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ==================== STATS ====================
+function StatsView({state, categories}) {
+  const t = state.transactions;
+  const totalI = t.filter(x=>x.type==='income').reduce((s,x)=>s+x.amount,0);
+  const totalE = t.filter(x=>x.type==='expense').reduce((s,x)=>s+x.amount,0);
+  const bal = totalI - totalE;
+  const avgD = (()=>{const e=t.filter(x=>x.type==='expense');if(!e.length)return 0;const d=new Set(e.map(x=>x.date));return totalE/d.size;})();
+
+  const monthly = (()=>{const m={};t.forEach(x=>{const k=x.date.substring(0,7);if(!m[k])m[k]={income:0,expense:0};m[k][x.type]+=x.amount;});return Object.entries(m).map(([k,v])=>({month:k.split('-')[1]+'/'+k.split('-')[0],income:v.income,expense:v.expense,balance:v.income-v.expense})).sort((a,b)=>a.month.localeCompare(b.month));})();
+  const expCat = categories.filter(c=>c.type==='expense').map(c=>({name:c.name,value:t.filter(x=>x.type==='expense'&&x.category===c.name).reduce((s,x)=>s+x.amount,0),color:c.color,icon:c.icon})).filter(c=>c.value>0).sort((a,b)=>b.value-a.value);
+  const incCat = categories.filter(c=>c.type==='income').map(c=>({name:c.name,value:t.filter(x=>x.type==='income'&&x.category===c.name).reduce((s,x)=>s+x.amount,0),color:c.color,icon:c.icon})).filter(c=>c.value>0).sort((a,b)=>b.value-a.value);
+  const bigE = t.filter(x=>x.type==='expense').sort((a,b)=>b.amount-a.amount)[0];
+  const bigI = t.filter(x=>x.type==='income').sort((a,b)=>b.amount-a.amount)[0];
+  const trend = monthly.length<2?'neutral':monthly[monthly.length-1].balance>monthly[monthly.length-2].balance?'up':'down';
+  const ts = {backgroundColor:'#12121a',border:'1px solid #00f5ff',borderRadius:8};
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:24}}>
+      <h2 style={{fontSize:22,color:'white',display:'flex',alignItems:'center',gap:8}}><span style={{color:'var(--neon-cyan)'}}><Icons.BarChart3/></span> Estatísticas Avançadas</h2>
+
+      <div className="grid-4" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16}}>
+        {[{l:'Total Receitas',v:fmt(totalI),c:'#4ade80',bg:'rgba(74,222,128,.15)',ic:<Icons.TrendingUp/>},
+          {l:'Total Despesas',v:fmt(totalE),c:'#f87171',bg:'rgba(248,113,113,.15)',ic:<Icons.TrendingDown/>},
+          {l:'Saldo',v:fmt(bal),c:bal>=0?'#4ade80':'#f87171',bg:bal>=0?'rgba(74,222,128,.15)':'rgba(248,113,113,.15)',ic:<Icons.DollarSign/>},
+          {l:'Média Diária',v:fmt(avgD),c:'#a855f7',bg:'rgba(168,85,247,.15)',ic:<Icons.Calendar/>},
+        ].map((c,i)=>(<div key={i} className="glass-card" style={{padding:16}}><div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}><div style={{padding:8,borderRadius:8,background:c.bg,color:c.c}}>{c.ic}</div><span style={{color:'var(--text-muted)',fontSize:13}}>{c.l}</span></div><p style={{fontSize:20,fontWeight:700,color:c.c,fontFamily:'Orbitron'}}>{c.v}</p></div>))}
+      </div>
+
+      <div className="glass-card" style={{padding:16,borderColor:trend==='up'?'rgba(74,222,128,.4)':trend==='down'?'rgba(248,113,113,.4)':'transparent'}}>
+        <div style={{display:'flex',alignItems:'center',gap:16}}>
+          <div style={{width:48,height:48,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:trend==='up'?'rgba(74,222,128,.15)':trend==='down'?'rgba(248,113,113,.15)':'rgba(250,204,21,.15)'}}>
+            {trend==='up'?<span style={{color:'#4ade80'}}><Icons.TrendingUp/></span>:trend==='down'?<span style={{color:'#f87171'}}><Icons.TrendingDown/></span>:<span style={{color:'#facc15'}}><Icons.Target/></span>}
+          </div>
+          <div><p style={{color:'var(--text-muted)',fontSize:13}}>Tendência</p><p style={{fontSize:18,fontWeight:700,color:trend==='up'?'#4ade80':trend==='down'?'#f87171':'#facc15'}}>{trend==='up'?'Crescente 📈':trend==='down'?'Decrescente 📉':'Estável ➡️'}</p></div>
+        </div>
+      </div>
+
+      <div className="glass-card" style={{padding:24}}>
+        <h3 style={{fontSize:16,fontWeight:700,color:'white',marginBottom:16,display:'flex',alignItems:'center',gap:8}}><span style={{color:'var(--neon-cyan)'}}><Icons.BarChart3/></span> Evolução Mensal</h3>
+        {monthly.length > 0 ? (
+          <ResponsiveContainer width="100%" height={280}>
+            <ComposedChart data={monthly}>
+              <defs><linearGradient id="cI2" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#39ff14" stopOpacity={.8}/><stop offset="95%" stopColor="#39ff14" stopOpacity={0}/></linearGradient><linearGradient id="cE2" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#ff0040" stopOpacity={.8}/><stop offset="95%" stopColor="#ff0040" stopOpacity={0}/></linearGradient></defs>
+              <XAxis dataKey="month" stroke="#606070"/><YAxis stroke="#606070" tickFormatter={v=>`R$${(v/1000).toFixed(0)}k`}/><Tooltip formatter={v=>fmt(v)} contentStyle={ts}/><Legend/>
+              <Bar dataKey="income" name="Receitas" fill="url(#cI2)" radius={[4,4,0,0]}/><Bar dataKey="expense" name="Despesas" fill="url(#cE2)" radius={[4,4,0,0]}/>
+              <Line type="monotone" dataKey="balance" name="Saldo" stroke="#00f5ff" strokeWidth={3} dot={{fill:'#00f5ff'}}/>
+            </ComposedChart>
+          </ResponsiveContainer>
+        ) : <div style={{height:280,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-muted)'}}>Sem dados</div>}
+      </div>
+
+      <div className="grid-2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:24}}>
+        {[{title:'Despesas por Categoria',data:expCat,bc:'#ff0040',ic:<span style={{color:'#f87171'}}><Icons.BarChart3/></span>},
+          {title:'Receitas por Categoria',data:incCat,bc:'#39ff14',ic:<span style={{color:'#4ade80'}}><Icons.BarChart3/></span>}].map((s,si)=>(
+          <div key={si} className="glass-card" style={{padding:24}}>
+            <h3 style={{fontSize:16,fontWeight:700,color:'white',marginBottom:16,display:'flex',alignItems:'center',gap:8}}>{s.ic} {s.title}</h3>
+            {s.data.length > 0 ? (<div><ResponsiveContainer width="100%" height={220}>
+              <PieChart><Pie data={s.data} cx="50%" cy="50%" innerRadius={55} outerRadius={75} paddingAngle={5} dataKey="value">{s.data.map((e,i)=><Cell key={i} fill={e.color}/>)}</Pie><Tooltip formatter={v=>fmt(v)} contentStyle={{...ts,border:`1px solid ${s.bc}`}}/></PieChart>
+            </ResponsiveContainer><div style={{marginTop:8}}>{s.data.slice(0,5).map(c=>(<div key={c.name} style={{display:'flex',justifyContent:'space-between',fontSize:12,padding:'4px 0'}}><span style={{color:c.color}}>{c.icon} {c.name}</span><span style={{color:'white'}}>{fmt(c.value)}</span></div>))}</div></div>)
+              : <div style={{height:220,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-muted)'}}>Sem dados</div>}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid-2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        <div className="glass-card" style={{padding:16,borderColor:'rgba(74,222,128,.3)'}}><p style={{color:'var(--text-muted)',fontSize:13,marginBottom:8}}>Maior Receita</p>{bigI?<div><p style={{fontSize:22,fontWeight:700,color:'#4ade80',fontFamily:'Orbitron'}}>{fmt(bigI.amount)}</p><p style={{color:'var(--text-muted)',fontSize:12}}>{bigI.description}</p></div>:<p style={{color:'#6b7280'}}>Nenhuma</p>}</div>
+        <div className="glass-card" style={{padding:16,borderColor:'rgba(248,113,113,.3)'}}><p style={{color:'var(--text-muted)',fontSize:13,marginBottom:8}}>Maior Despesa</p>{bigE?<div><p style={{fontSize:22,fontWeight:700,color:'#f87171',fontFamily:'Orbitron'}}>{fmt(bigE.amount)}</p><p style={{color:'var(--text-muted)',fontSize:12}}>{bigE.description}</p></div>:<p style={{color:'#6b7280'}}>Nenhuma</p>}</div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== MAIN APP ====================
+function App() {
+  const [logged, setLogged] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [view, setView] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
+  const [toast, setToast] = useState(null);
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  // State
+  const [state, setState] = useState({
+    transactions: [],
+    categories: defaultCategories,
+    gameStats: {level:1,xp:0,xpToNextLevel:100,streak:0,lastLogin:new Date().toISOString(),totalTransactions:0,achievements:[...defaultAchievements]},
+    budgets: [],
+    goals: [...defaultGoals],
+    user: {name:'JOBE',avatar:'🎮'},
+  });
+
+  // Load from localStorage
+  useEffect(()=>{
+    const s = localStorage.getItem('financeGameJOBE');
+    if(s) try { setState(prev=>({...prev,...JSON.parse(s)})); } catch(e){}
+  },[]);
+
+  // Save to localStorage
+  useEffect(()=>{
+    if(logged) localStorage.setItem('financeGameJOBE', JSON.stringify(state));
+  },[state, logged]);
+
+  const showToast = useCallback((title,msg,type='success')=>{
+    setToast({title,msg,type});
+    setTimeout(()=>setToast(null),4000);
+  },[]);
+
+  // Login handler
+  const handleLogin = (name) => {
+    setUserName(name);
+    setState(prev=>({...prev,user:{...prev.user,name}}));
+    setLogged(true);
+    if(state.transactions.length === 0) setTimeout(()=>setShowWelcome(true),500);
+  };
+
+  const handleLogout = () => { setLogged(false); setUserName(''); };
+
+  // Actions
+  const addTransaction = (tx) => {
+    const nt = {...tx, id:Date.now().toString(), createdAt:Date.now()};
+    setState(prev=>{
+      const nts = [nt,...prev.transactions];
+      const ntot = prev.gameStats.totalTransactions + 1;
+      const xpG = tx.type==='income' ? Math.floor(tx.amount/10) : Math.floor(tx.amount/20);
+      let nxp = prev.gameStats.xp + xpG, nlvl = prev.gameStats.level, nxpN = prev.gameStats.xpToNextLevel;
+      if(nxp >= nxpN) { nlvl++; nxpN = Math.floor(nxpN*1.5); confetti({particleCount:80,spread:60,origin:{y:.6},colors:['#ffd700','#ff00ff','#00f5ff']}); }
+      const nachs = prev.gameStats.achievements.map(a=>{
+        if(a.unlocked) return a;
+        let u=false;
+        if(a.condition==='first_transaction' && ntot>=a.requirement) u=true;
+        if(a.condition==='expense_limit' && tx.type==='expense' && tx.amount<=a.requirement) u=true;
+        if(a.condition==='income_goal' && nts.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0)>=a.requirement) u=true;
+        return u ? {...a,unlocked:true,unlockedAt:Date.now()} : a;
+      });
+      return {...prev,transactions:nts,gameStats:{...prev.gameStats,xp:nxp%nxpN,level:nlvl,xpToNextLevel:nxpN,totalTransactions:ntot,achievements:nachs}};
+    });
+    showToast(tx.type==='income'?'💰 Receita Adicionada!':'💸 Despesa Registrada!',`${tx.description}: ${fmt(tx.amount)}`,tx.type==='income'?'success':'warning');
+  };
+
+  const deleteTransaction = (id) => { setState(prev=>({...prev,transactions:prev.transactions.filter(t=>t.id!==id)})); showToast('🗑️ Removida','Transação excluída','success'); };
+  const addBudget = (b) => { setState(prev=>({...prev,budgets:[...prev.budgets,{...b,spent:0}]})); showToast('🎯 Orçamento Criado!','Novo orçamento definido','success'); };
+  const deleteBudget = (id) => { setState(prev=>({...prev,budgets:prev.budgets.filter(b=>b.categoryId!==id)})); };
+  const addGoal = (g) => { setState(prev=>({...prev,goals:[...prev.goals,{...g,id:Date.now().toString(),currentAmount:0}]})); showToast('⭐ Meta Definida!','Nova meta criada','success'); };
+  const deleteGoal = (id) => { setState(prev=>({...prev,goals:prev.goals.filter(g=>g.id!==id)})); };
+  const contributeGoal = (id, amt) => {
+    setState(prev=>{
+      const ng = prev.goals.map(g=>g.id===id?{...g,currentAmount:Math.min(g.currentAmount+amt,g.targetAmount)}:g);
+      const g = ng.find(x=>x.id===id);
+      if(g && g.currentAmount>=g.targetAmount) confetti({particleCount:120,spread:90,origin:{y:.6},colors:['#39ff14','#00f5ff','#ffd700']});
+      return {...prev,goals:ng};
+    });
+    const g = state.goals.find(x=>x.id===id);
+    if(g && g.currentAmount+amt>=g.targetAmount) showToast('🎉 Meta Atingida!',`Completou: ${g.name}`,'success');
+    else showToast('💎 Contribuição!',`+${fmt(amt)}`,'success');
+  };
+
+  // Computed
+  const getTotalIncome = useCallback(()=>state.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),[state.transactions]);
+  const getTotalExpense = useCallback(()=>state.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),[state.transactions]);
+  const getBalance = useCallback(()=>getTotalIncome()-getTotalExpense(),[getTotalIncome,getTotalExpense]);
+  const getDailyTotal = useCallback(()=>{const td=new Date().toISOString().split('T')[0];return state.transactions.filter(t=>t.type==='expense'&&t.date===td).reduce((s,t)=>s+t.amount,0);},[state.transactions]);
+  const getTransactionsByCategory = useCallback((type)=>{return state.categories.filter(c=>c.type===type).map(c=>({name:c.name,value:state.transactions.filter(t=>t.type===type&&t.category===c.name).reduce((s,t)=>s+t.amount,0),color:c.color,icon:c.icon})).filter(c=>c.value>0);},[state.transactions,state.categories]);
+  const getMonthlyData = useCallback(()=>{const m={};state.transactions.forEach(t=>{const k=t.date.substring(0,7);if(!m[k])m[k]={income:0,expense:0};m[k][t.type]+=t.amount;});return Object.entries(m).map(([k,v])=>({month:k,income:v.income,expense:v.expense,balance:v.income-v.expense})).sort((a,b)=>a.month.localeCompare(b.month)).slice(-6);},[state.transactions]);
+  const getExpensesByDay = useCallback(()=>{const d7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-i);return d.toISOString().split('T')[0];}).reverse();const days={};d7.forEach(d=>days[d]=0);state.transactions.filter(t=>t.type==='expense'&&days[t.date]!==undefined).forEach(t=>days[t.date]+=t.amount);return d7.map(d=>({date:d,dayName:new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'short'}),total:days[d]}));},[state.transactions]);
+  const getRecentTransactions = useCallback(()=>state.transactions.slice(0,10),[state.transactions]);
+  const getUnlockedAchievements = useCallback(()=>state.gameStats.achievements.filter(a=>a.unlocked),[state.gameStats.achievements]);
+
+  const menuItems = [
+    {id:'dashboard',label:'Dashboard',icon:Icons.LayoutDashboard},
+    {id:'transactions',label:'Transações',icon:Icons.Receipt},
+    {id:'daily',label:'Gastos Diários',icon:Icons.Calendar},
+    {id:'budget',label:'Orçamentos',icon:Icons.Target},
+    {id:'goals',label:'Metas',icon:Icons.Zap},
+    {id:'achievements',label:'Conquistas',icon:Icons.Trophy},
+    {id:'stats',label:'Estatísticas',icon:Icons.BarChart3},
+  ];
+
+  if (!logged) return <LoginScreen onLogin={handleLogin}/>;
+
+  const balance = getBalance();
+
+  return (
+    <div className="grid-bg" style={{minHeight:'100vh'}}>
+      {/* Sidebar */}
+      <aside className={`sidebar ${sidebarOpen?'':'closed'}`}>
+        <div style={{padding:20,borderBottom:'1px solid rgba(255,255,255,.1)'}}>
+          <div style={{display:'flex',alignItems:'center',gap:12}}>
+            <div style={{width:44,height:44,borderRadius:'50%',background:'linear-gradient(135deg,#00f5ff,#9d00ff)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>🎮</div>
+            <div style={{minWidth:0}}>
+              <p style={{color:'white',fontWeight:600,fontSize:15}}>{state.user.name}</p>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                <span style={{fontSize:11,color:'#ffd700'}}>Lvl {state.gameStats.level}</span>
+                <div style={{flex:1,height:6,background:'rgba(255,255,255,.08)',borderRadius:3,overflow:'hidden'}}>
+                  <div style={{height:'100%',background:'linear-gradient(90deg,#ffd700,#ff6600)',width:`${(state.gameStats.xp/state.gameStats.xpToNextLevel)*100}%`,transition:'width .3s'}}/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <nav style={{padding:16,flex:1,display:'flex',flexDirection:'column',gap:4}}>
+          {menuItems.map(m=>{
+            const Icon = m.icon;
+            return (
+              <button key={m.id} className={`sidebar-btn ${view===m.id?'active':''}`} onClick={()=>{setView(m.id);if(window.innerWidth<=768)setSidebarOpen(false);}}>
+                <span style={{color:view===m.id?'var(--neon-cyan)':'inherit'}}><Icon/></span>
+                <span>{m.label}</span>
+                {view===m.id && <span style={{marginLeft:'auto',width:6,height:6,borderRadius:'50%',background:'var(--neon-cyan)'}}/>}
+              </button>
+            );
+          })}
+        </nav>
+        <div style={{padding:16,borderTop:'1px solid rgba(255,255,255,.1)'}}>
+          <button className="sidebar-btn" onClick={handleLogout} style={{color:'#f87171'}} onMouseEnter={e=>e.currentTarget.style.color='#ef4444'} onMouseLeave={e=>e.currentTarget.style.color='#f87171'}>
+            <Icons.LogOut/><span>Sair</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main */}
+      <main className="main-content" style={{marginLeft:sidebarOpen?280:0,transition:'margin-left .3s'}}>
+        <header style={{position:'sticky',top:0,zIndex:30,background:'rgba(10,10,15,.85)',backdropFilter:'blur(16px)',borderBottom:'1px solid rgba(255,255,255,.08)'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:16}}>
+            <div style={{display:'flex',alignItems:'center',gap:16}}>
+              <button onClick={()=>setSidebarOpen(!sidebarOpen)} style={{padding:8,borderRadius:8,background:'none',border:'none',cursor:'pointer',color:'var(--text-muted)',transition:'background .2s'}}
+                onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.08)'}
+                onMouseLeave={e=>e.currentTarget.style.background='none'}>
+                {sidebarOpen ? <Icons.X/> : <Icons.Menu/>}
+              </button>
+              <h2 style={{fontSize:18,fontWeight:700,color:'white'}}>{menuItems.find(m=>m.id===view)?.label}</h2>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:16}}>
+              <div className="hide-mobile" style={{display:'flex',alignItems:'center',gap:8,padding:'8px 16px',borderRadius:8,background:'rgba(255,255,255,.05)'}}>
+                <span style={{color:'var(--text-muted)',fontSize:13}}>Saldo:</span>
+                <span style={{fontWeight:700,fontFamily:'Orbitron',fontSize:14,color:balance>=0?'#4ade80':'#f87171'}}>{fmt(balance)}</span>
+              </div>
+              <div style={{position:'relative',padding:8,borderRadius:8,cursor:'pointer'}}>
+                <span style={{color:'var(--text-muted)'}}><Icons.Bell/></span>
+                <span style={{position:'absolute',top:6,right:6,width:8,height:8,borderRadius:'50%',background:'#ef4444',animation:'pulse-glow 2s infinite'}}/>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div style={{padding:24}}>
+          {view==='dashboard' && <Dashboard state={state} getTotalIncome={getTotalIncome} getTotalExpense={getTotalExpense} getBalance={getBalance} getDailyTotal={getDailyTotal} getTransactionsByCategory={getTransactionsByCategory} getMonthlyData={getMonthlyData} getExpensesByDay={getExpensesByDay} getRecentTransactions={getRecentTransactions} getUnlockedAchievements={getUnlockedAchievements}/>}
+          {view==='transactions' && <Transactions state={state} categories={state.categories} onAdd={addTransaction} onDelete={deleteTransaction}/>}
+          {view==='daily' && <DailyExpenses transactions={state.transactions}/>}
+          {view==='budget' && <BudgetView state={state} categories={state.categories} onAdd={addBudget} onDelete={deleteBudget}/>}
+          {view==='goals' && <GoalsView state={state} onAdd={addGoal} onDelete={deleteGoal} onContribute={contributeGoal}/>}
+          {view==='achievements' && <AchievementsView achievements={state.gameStats.achievements}/>}
+          {view==='stats' && <StatsView state={state} categories={state.categories}/>}
+        </div>
+      </main>
+
+      {/* Toast */}
+      {toast && (
+        <div className="toast" style={{background:toast.type==='success'?'rgba(74,222,128,.1)':toast.type==='warning'?'rgba(250,204,21,.1)':'rgba(248,113,113,.1)',border:`1px solid ${toast.type==='success'?'rgba(74,222,128,.5)':toast.type==='warning'?'rgba(250,204,21,.5)':'rgba(248,113,113,.5)'}`}}>
+          <div style={{display:'flex',alignItems:'flex-start',gap:12}}>
+            <div style={{width:40,height:40,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:toast.type==='success'?'rgba(74,222,128,.2)':toast.type==='warning'?'rgba(250,204,21,.2)':'rgba(248,113,113,.2)',flexShrink:0}}>
+              {toast.type==='success'?'✅':toast.type==='warning'?'⚠️':'❌'}
+            </div>
+            <div><h4 style={{fontWeight:700,color:toast.type==='success'?'#4ade80':toast.type==='warning'?'#facc15':'#f87171'}}>{toast.title}</h4><p style={{color:'var(--text-muted)',fontSize:13}}>{toast.msg}</p></div>
+          </div>
+        </div>
+      )}
+
+      {/* Welcome Modal */}
+      {showWelcome && (
+        <div className="modal-overlay" style={{zIndex:60}}>
+          <div className="modal-content glass-card" style={{padding:32,textAlign:'center',maxWidth:480}}>
+            <div style={{fontSize:56,marginBottom:16}}>🎮</div>
+            <h2 style={{fontSize:26,color:'white',marginBottom:12}}>Bem-vindo ao Finance-Game!</h2>
+            <p style={{color:'var(--text-muted)',marginBottom:24,lineHeight:1.6}}>Transforme sua gestão financeira em uma experiência gamificada. Complete missões, desbloqueie conquistas e evolua seu nível!</p>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:24}}>
+              {[{e:'📊',t:'Controle Total',c:'var(--neon-cyan)'},{e:'🏆',t:'Conquistas',c:'#a855f7'},{e:'⭐',t:'Metas',c:'#4ade80'}].map((x,i)=>(
+                <div key={i} style={{padding:16,borderRadius:8,background:`${x.c}10`,border:`1px solid ${x.c}30`}}><div style={{fontSize:28,marginBottom:4}}>{x.e}</div><p style={{color:x.c,fontSize:12}}>{x.t}</p></div>
+              ))}
+            </div>
+            <button className="btn-cyber" style={{width:'100%',fontSize:16}} onClick={()=>setShowWelcome(false)}>Começar a Jogar!</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.render(<App/>, document.getElementById('root'));
+</script>
+</body>
+</html>
